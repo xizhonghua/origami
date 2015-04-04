@@ -7,6 +7,9 @@ function init()
 
     controls = new THREE.OrbitControls( camera );
 
+    // hack the keys...
+    controls.keys = { LEFT: 39, UP: 40, RIGHT: 37, BOTTOM: 38 };
+
     controls.rotateSpeed = 5.0;
     controls.zoomSpeed = 5;
 
@@ -16,11 +19,37 @@ function init()
     renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
+    renderer.setClearColor( 0xffffff, 0.5 );
+
     document.body.appendChild( renderer.domElement );
 
+    var ambientLight = new THREE.AmbientLight( 0x000000 );
+    scene.add( ambientLight );
+
+    var lights = [];
+    lights[0] = new THREE.PointLight( 0xffffff, 1, 0 );
+    lights[1] = new THREE.PointLight( 0xffffff, 1, 0 );
+    lights[2] = new THREE.PointLight( 0xffffff, 1, 0 );
+    
+    lights[0].position.set( 0, 200, 0 );
+    lights[1].position.set( 100, 200, 100 );
+    lights[2].position.set( -100, -200, -100 );
+
+    scene.add( lights[0] );
+    scene.add( lights[1] );
+    scene.add( lights[2] );
+
     materials = [ 
-        new THREE.MeshBasicMaterial( { color: 0x00ff00}), 
-        new THREE.MeshBasicMaterial( { color: 0x000000, wireframe: true, wireframeLinewidth: 0.1})
+        new THREE.MeshPhongMaterial( { 
+            color: 0x996633, 
+            specular: 0x050505,
+            shininess: 100
+        }),
+        new THREE.MeshBasicMaterial({
+            color: 0x000000, 
+            wireframe: true, 
+            wireframeLinewidth: 0.1
+        })
     ];
 
     materials[0].side = THREE.DoubleSide;
