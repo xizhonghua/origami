@@ -1,4 +1,8 @@
-var scene, camera, renderer, origami, mesh, materials, controls, percentage, dir;
+var scene, camera, renderer, origami, mesh, materials, controls, percentage, animation_step, dir, animation;
+
+// for animation
+var max_p = 400;
+var delay_p = 0.1*max_p;
 
 function init()
 {
@@ -10,8 +14,8 @@ function init()
     // hack the keys...
     controls.keys = { LEFT: 39, UP: 40, RIGHT: 37, BOTTOM: 38 };
 
-    controls.rotateSpeed = 5.0;
-    controls.zoomSpeed = 5;
+    controls.rotateSpeed = 2.0;
+    controls.zoomSpeed = 1.0;
 
     controls.noZoom = false;
     controls.noPan = false;
@@ -43,7 +47,7 @@ function init()
         new THREE.MeshPhongMaterial( { 
             color: 0x996633, 
             specular: 0x050505,
-            shininess: 100
+            shininess: 10
         }),
         new THREE.MeshBasicMaterial({
             color: 0x000000, 
@@ -54,9 +58,16 @@ function init()
 
     materials[0].side = THREE.DoubleSide;
 
+}
+
+function loadModel(model_url, traj_url)
+{
+    // first remove existing model
+    removeModel();
+
     origami = new Origami.Model();
 
-    origami.load('models/star-024.json', function(){
+    origami.load(model_url, traj_url, function(){
 
         origami.foldTo(origami.goal_cfg);
 
@@ -65,39 +76,61 @@ function init()
         
         mesh = new THREE.Mesh( origami.geometry, materials[0] );
         edges = new THREE.Mesh( origami.geometry, materials[1] );
+        mesh.name = 'mesh';
+        mesh.name = 'edges';
         scene.add( mesh );
         scene.add( edges );
         
         //camera.lookAt(new THREE.vector3(0,1,0));
         //camera.up = new THREE.vector(0,0,1);
         camera.position.z = origami.geometry.boundingSphere.radius * 3;
+        //camera.rotation.y = -1.5;
+        //camera.rotation.x = 1.57;
+        //camera.rotation.x = -1.57;
+        controls.rotateUp(1.57);
+        controls.rotateLeft(1.57);
+        controls.update();
 
         render();
     });
 
+    animation_step = 1;
+
     dir = 1;
 
     percentage = 0.0;
+
+    animation = false;
+
+}
+
+function removeModel()
+{
+    var mesh = scene.getObjectByName('mesh');
+    var edges = scene.getObjectByName('edges');
+    scene.remove( mesh );
+    scene.remove( edges );
 }
 
 function render()
 {
     requestAnimationFrame( render );
 
-    percentage += dir;
-
-    if(percentage > 400)
+    if(animation)
     {
-        percentage = 400;
-        dir = -1;
-    }
-    else if(percentage < 0)
-    {
-        percentage = 0;
-        dir = 1;
+        percentage += dir * animation_step;
+
+        if(percentage > max_p + delay_p)
+        {            
+            dir = -1;
+        }
+        else if(percentage < -delay_p)
+        {            
+            dir = 1;
+        }
     }
 
-    origami.foldToPercentage(percentage/400.0);
+    origami.foldToPercentage(percentage/max_p);
 
     renderer.render(scene, camera);
 }
@@ -109,6 +142,27 @@ function onWindowResize() {
     renderer.setSize( window.innerWidth, window.innerHeight );
 }
 
+$(document).keypress(function(event) {
+    switch(event.charCode)
+    {
+        //space
+        case 32: 
+            animation = !animation;            
+            break;
+        // ','    
+        case 44:
+            percentage = Math.min(max_p, percentage+3*animation_step);
+            animation = false;
+            break;
+        // '.'
+        case 46:
+            percentage = Math.max(0, percentage-3*animation_step);
+            animation = false;
+            break;
+        default:
+            break;
+    }    
+});
 
 init();
 

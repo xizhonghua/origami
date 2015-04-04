@@ -71,11 +71,24 @@ Origami.Model = function() {
     this.geometry = null;
 }
 
-Origami.Model.prototype.load = function(url, callback) {
+Origami.Model.prototype.load = function(model_url, traj_url, callback) {
     var me = this;
-    $.getJSON(url, function(json, textStatus) {
-        me.build(json);
+
+    var my_callback = function() {
         if(callback) callback(me);
+    }
+
+    $.getJSON(model_url, function(model, textStatus) {
+        me.build(model);
+        if(!traj_url) {
+            my_callback(me);
+        }
+        else {
+            $.getJSON(traj_url, function(data, textStatus) {
+                me.folding_path = data.trajs;
+                my_callback(me);
+            });
+        }
     });
 }
 
@@ -174,11 +187,29 @@ Origami.Model.prototype.addFoldingPath = function(path) {
 
 // fold the origami to certen percentage
 Origami.Model.prototype.foldToPercentage = function(percentage) {
-    // body...
+    
+    if(percentage<0) percentage=0;
+    if(percentage>1) percentage=1;
+
     var cfg = [];
-    for(var i=0;i<this.creases.length;++i)
-    {
-        cfg[i] = this.start_cfg[i] * (1 - percentage) + this.goal_cfg[i] * percentage;
+    
+    if(this.folding_path && this.folding_path.length > 0) {
+        if(percentage<=0) {
+            return this.foldTo(this.start_cfg); 
+        } else if(percentage >=1 ) {
+            return this.foldTo(this.goal_cfg);
+        }
+
+        // percentage per cfg
+        var ppc = 1.0 / this.folding_path.length;
+        var index = Math.floor(percentage / ppc);
+        // percentage in between two cfgs
+        var pib = (percentage - index * ppc) / ppc;
+
+        cfg.linearBlend(this.folding_path[index], this.folding_path[index+1], pib);
+
+    } else {
+        cfg.linearBlend(this.start_cfg, this.goal_cfg, percentage);
     }
 
     this.foldTo(cfg);

@@ -59,3 +59,15 @@ THREE.Matrix4.prototype.makeTransform = function(p1, p2, theta) {
 
     return this;
 }
+
+// set the current array a linear blend of a->b by given percentage
+// a and b should have the same length
+Array.prototype.linearBlend = function(a, b, percentage) {
+    // clear myself
+    this.splice(0, this.length);
+
+    for(var i=0;i<a.length;++i)    
+        this[i] = a[i] * (1 - percentage) + b[i] * percentage;
+    
+    return this;
+}

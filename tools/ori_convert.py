@@ -5,6 +5,7 @@
 import sys
 import os
 import json
+import math
 
 
 def convert_ori_to_json(input, output):
@@ -70,19 +71,31 @@ def convert_ori_to_json(input, output):
 
     pass
 
-def convert_traj_to_json(input, output):
-    # TODO
+def convert_traj_to_json(input, output):   
+    print 'reading form', input
+    print 'exporting to', output
+
+    with open(input, 'r') as fin:
+        with open(output, 'w') as fout:
+            trajs = []
+            for line in fin:
+                trajs.append([float(x)*math.pi/180.0 for x in line.split()])
+            t = {}
+            t['trajs'] = trajs
+            json_str = json.dumps(t)
+            fout.write(json_str)
+
     pass
 
 
 def main():
     if len(sys.argv) < 2:
-        print sys.argv[0], '*.ori / *.traj'
+        print sys.argv[0], '*.ori / *.trj'
     else:
         filename = sys.argv[1]
         if filename.endswith('.ori'):
             convert_ori_to_json(filename, filename+'.json')
-        elif filename.endswith('.traj'):
+        elif filename.endswith('.trj'):
             convert_traj_to_json(filename, filename+'.json')
         else:
             print 'unknown file type', filename
