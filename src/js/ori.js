@@ -1,13 +1,26 @@
 // requires:
 //  jQuery
 //  Three.js
+//  js/extension.js
 
 // namespace
 var Origami = Origami || {};
 
 // crease class
-Origami.Crease = function() {
+Origami.Crease = function(vid1, vid2, folding_angle, fid, pid) {
 
+    // vetex indices
+    this.vid1 = vid1;
+    this.vid2 = vid2;
+
+    // folding angle
+    this.folding_angle = folding_angle;
+
+    // face id
+    this.fid = fid;
+
+    // parent face id
+    this.pid = pid;
 }
 
 // face class
@@ -49,6 +62,13 @@ Origami.Model = function() {
 
     // ordered face list
     this.ordered_face_ids = []; 
+
+    // start and goal cfg
+    this.start_cfg = [];
+    this.goal_cfg = [];
+
+    // three js geometry
+    this.geometry = null;
 }
 
 Origami.Model.prototype.load = function(url, callback) {
@@ -67,6 +87,9 @@ Origami.Model.prototype.build = function(model) {
     // bace face
     this.base_face_id = model.base_face_id;
 
+    this.vertices = [];
+    this.flat_vertices = [];
+
     // building vertices
     for(var i=0;i<model.vertices.length;++i)
     {
@@ -80,6 +103,8 @@ Origami.Model.prototype.build = function(model) {
         this.flat_vertices.push(vertex.clone());
     }
 
+    this.faces = [];
+
     // building faces
     for(var i=0;i<model.faces.length;++i)
     {
@@ -90,18 +115,57 @@ Origami.Model.prototype.build = function(model) {
         this.faces.push(face);
     }
 
+    this.creases = [];
+
     //building creases
-    for(var i=0;i<models.creases.length;++i)
+    for(var i=0;i<model.creases.length;++i)
     {
         var c = model.creases[i];
 
-        var crease = new Origami.Crease();
+        var crease = new Origami.Crease(c[0], c[1], c[2], c[3], c[4]);
 
         this.creases.push(crease);
     }
 
+    this.ordered_face_ids = model.ordered_face_ids;
+
+    // set start and goal status
+
+    this.start_cfg = [];
+    this.goal_cfg = [];
+
+    for(var i=0;i<this.creases.length;++i)
+    {
+        this.start_cfg.push(0);
+        this.goal_cfg.push(this.creases[i].folding_angle);
+    }
+
+    this.buildThreeGeometry();
+
+    
     console.log('built!');
 };
+
+Origami.Model.prototype.buildThreeGeometry = function() {
+
+    // build Threejs geometry object
+
+    this.geometry = new THREE.Geometry();
+    
+    // same pointer
+    this.geometry.vertices = this.vertices;
+
+    this.geometry.faces = [];
+
+
+    for(var i=0;i<this.faces.length;++i)
+    {
+        var f = this.faces[i];
+        this.geometry.faces.push(new THREE.Face3(f.vids[0], f.vids[1], f.vids[2]));
+    }
+
+    this.updateGeometry();
+}
 
 // add folding path data
 Origami.Model.prototype.addFoldingPath = function(path) {    
@@ -109,6 +173,70 @@ Origami.Model.prototype.addFoldingPath = function(path) {
 };
 
 // fold the origami to certen percentage
-Origami.Model.prototype.foldTo = function(percentage) {
+Origami.Model.prototype.foldToPercentage = function(percentage) {
     // body...
+    var cfg = [];
+    for(var i=0;i<this.creases.length;++i)
+    {
+        cfg[i] = this.start_cfg[i] * (1 - percentage) + this.goal_cfg[i] * percentage;
+    }
+
+    this.foldTo(cfg);
 };
+
+// fold the origami to given configuration
+Origami.Model.prototype.foldTo = function(cfg) {
+
+    // folding matrices
+    ms = [];
+
+    // base face's rotation matrix is an identity matrix
+    ms[this.base_face_id] = new THREE.Matrix4();
+
+    // folding each face by computing folding matrix on the fly
+    for(var i=0;i<this.ordered_face_ids.length;++i)
+    {
+        var fid = this.ordered_face_ids[i];
+
+        // do not fold base face
+        if(fid == this.base_face_id) continue;
+
+        var face = this.faces[fid];    
+        var crease = this.creases[face.cid];
+        var folding_angle = cfg[face.cid];
+        var p1 = this.vertices[crease.vid1];
+        var p2 = this.vertices[crease.vid2];
+        var pid = face.pid;
+
+        // computing folding matrix
+        var transform_matrix = new THREE.Matrix4();
+        ms[fid] = transform_matrix.makeTransform(p1, p2, folding_angle).multiply(ms[pid]);
+
+        // fold each vertex
+        for(var j=0;j<3;j++)
+        {
+            var vid = face.vids[j];
+
+            // don't fold already folded vertices along the edge itself, this causes unstable folded shape
+            if(vid == crease.vid1 || vid == crease.vid2) continue;
+
+            // fold the vertex
+            this.vertices[vid].copy(this.flat_vertices[vid]).applyMatrix4(ms[fid]);
+        }
+
+    }
+
+    this.updateGeometry();
+};
+
+Origami.Model.prototype.updateGeometry = function() {
+
+    // update vertex
+    this.geometry.verticesNeedUpdate = true;
+
+    this.geometry.computeBoundingSphere();
+
+    this.geometry.computeFaceNormals();
+
+    this.geometry.computeVertexNormals();
+}

@@ -58,7 +58,7 @@ def convert_ori_to_json(input, output):
         ordered_faces.append(int(fin.readline()))
 
     ori['base_face_id'] = base_face_id
-    ori['ordered_faces'] = ordered_faces
+    ori['ordered_face_ids'] = ordered_faces
 
     # make it a little bit human readable
     json_str = json.dumps(ori, indent=2)
