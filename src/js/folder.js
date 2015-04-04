@@ -1,4 +1,4 @@
-var scene, camera, renderer, origami, mesh, materials, controls, percentage, animation_step, dir, animation;
+var scene, camera, renderer, origami, mesh, materials, controls, percentage, animation_step, dir, animation, rendered;
 
 // for animation
 var max_p = 400;
@@ -77,31 +77,26 @@ function loadModel(model_url, traj_url)
         mesh = new THREE.Mesh( origami.geometry, materials[0] );
         edges = new THREE.Mesh( origami.geometry, materials[1] );
         mesh.name = 'mesh';
-        mesh.name = 'edges';
+        edges.name = 'edges';
         scene.add( mesh );
         scene.add( edges );
         
-        //camera.lookAt(new THREE.vector3(0,1,0));
-        //camera.up = new THREE.vector(0,0,1);
+        
         camera.position.z = origami.geometry.boundingSphere.radius * 3;
-        //camera.rotation.y = -1.5;
-        //camera.rotation.x = 1.57;
-        //camera.rotation.x = -1.57;
         controls.rotateUp(1.57);
         controls.rotateLeft(1.57);
         controls.update();
 
-        render();
+        animation_step = 1;
+
+        dir = 1;
+
+        percentage = 0.0;
+
+        animation = true;
+
+        if(!rendered) render();
     });
-
-    animation_step = 1;
-
-    dir = 1;
-
-    percentage = 0.0;
-
-    animation = false;
-
 }
 
 function removeModel()
@@ -114,6 +109,8 @@ function removeModel()
 
 function render()
 {
+    rendered = true;
+
     requestAnimationFrame( render );
 
     if(animation)

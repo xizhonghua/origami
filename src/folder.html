@@ -11,17 +11,31 @@
                 overflow: hidden;
             }
             canvas { width: 100%; height: 100% }
+            #model-selector {
+                position: absolute;
+                top:10px;
+                left:10px;
+            }            
         </style>
     </head>
     <body>
         <div id="canvas">
+        </div>
+        <div id="model-selector">            
+            <button type="button" id="bunny" model="models/bunny-128_94716.ori.json" traj="models/bunny-128_94716_1427762975.trj.json">Bunny</button>             
+            <button id="periscope2" model="models/periscope2.ori.json" traj="models/periscope2_1427035284.trj.json" type="button">Periscope2</button>            
         </div>
         <script src="js/OrbitControls.js"></script>
         <script src='js/extension.js'></script>
         <script src='js/ori.js'></script>
         <script src='js/folder.js'></script>      
         <script>
-            loadModel('models/bunny-128_94716.ori.json', 'models/bunny-128_94716_1427762975.trj.json');
+        $("button").click(function() {
+            model_url = $(this).attr("model");
+            traj_url = $(this).attr("traj");
+            loadModel(model_url, traj_url);
+        });
+        $("button")[0].click();
         </script>
     </body>
 </html>
