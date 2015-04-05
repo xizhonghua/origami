@@ -69,18 +69,27 @@ Origami.Model = function() {
 
     // three js geometry
     this.geometry = null;
+
+    this.loaded = false;
 }
 
 Origami.Model.prototype.load = function(model_url, traj_url, callback) {
     var me = this;
 
+    this.loaded = false;
+
     var my_callback = function() {
+        me.loaded = true;
         if(callback) callback(me);
     }
 
     $.getJSON(model_url, function(model, textStatus) {
+        
+        // build the model
         me.build(model);
-        if(!traj_url) {
+
+        // check trajectory file
+        if(traj_url==null || traj_url.length == 0) {
             my_callback(me);
         }
         else {
@@ -186,8 +195,9 @@ Origami.Model.prototype.addFoldingPath = function(path) {
 };
 
 // fold the origami to certen percentage
-Origami.Model.prototype.foldToPercentage = function(percentage) {
-    
+Origami.Model.prototype.foldToPercentage = function(percentage) {    
+    if(!this.loaded) return;
+
     if(percentage<0) percentage=0;
     if(percentage>1) percentage=1;
 
@@ -262,12 +272,14 @@ Origami.Model.prototype.foldTo = function(cfg) {
 
 Origami.Model.prototype.updateGeometry = function() {
 
-    // update vertex
-    this.geometry.verticesNeedUpdate = true;
+    if(!this.geometry) return;
 
     this.geometry.computeBoundingSphere();
 
     this.geometry.computeFaceNormals();
 
     this.geometry.computeVertexNormals();
+
+    this.geometry.verticesNeedUpdate = true;
+    this.geometry.normalsNeedUpdate = true;
 }

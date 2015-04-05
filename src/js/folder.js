@@ -27,27 +27,30 @@ function init()
 
     document.body.appendChild( renderer.domElement );
 
-    var ambientLight = new THREE.AmbientLight( 0x000000 );
+    var ambientLight = new THREE.AmbientLight( 0x666666 );
     scene.add( ambientLight );
 
     var lights = [];
-    lights[0] = new THREE.PointLight( 0xffffff, 1, 0 );
-    lights[1] = new THREE.PointLight( 0xffffff, 1, 0 );
-    lights[2] = new THREE.PointLight( 0xffffff, 1, 0 );
+    lights[0] = new THREE.PointLight( 0xffffff, 1.0, 0 );
+    lights[1] = new THREE.PointLight( 0xffffff, 1.0, 0 );
+    lights[2] = new THREE.PointLight( 0xffffff, 1.0, 0 );
     
     lights[0].position.set( 0, 200, 0 );
-    lights[1].position.set( 100, 200, 100 );
-    lights[2].position.set( -100, -200, -100 );
+    lights[1].position.set( 100, 100, 100 );
+    lights[2].position.set( -100, -100, -100 );
 
     scene.add( lights[0] );
     scene.add( lights[1] );
     scene.add( lights[2] );
 
     materials = [ 
-        new THREE.MeshPhongMaterial( { 
+        // new THREE.MeshPhongMaterial( { 
+        //     color: 0x996633, 
+        //     specular: 0x050505,
+        //     shininess: 10
+        // }),
+        new THREE.MeshLambertMaterial({
             color: 0x996633, 
-            specular: 0x050505,
-            shininess: 10
         }),
         new THREE.MeshBasicMaterial({
             color: 0x000000, 
@@ -132,12 +135,12 @@ function render()
     renderer.render(scene, camera);
 }
 
-function onWindowResize() {
+$( window ).resize(function() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
 
     renderer.setSize( window.innerWidth, window.innerHeight );
-}
+});
 
 $(document).keypress(function(event) {
     switch(event.charCode)
@@ -156,6 +159,9 @@ $(document).keypress(function(event) {
             percentage = Math.max(0, percentage-3*animation_step);
             animation = false;
             break;
+        // 'e'
+        case 101:
+            edges.visible = !edges.visible;
         default:
             break;
     }    

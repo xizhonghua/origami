@@ -1,0 +1,18 @@
+{
+    "models": [
+        {
+            "name":"Bunny",
+            "model_url":"models/bunny-128_94716.ori.json", 
+            "traj_url":"models/bunny-128_94716_1427762975.trj.json"
+        },
+        {
+            "name":"Periscope2",
+            "model_url":"models/periscope2.ori.json",
+            "traj_url":"models/periscope2_1427035284.trj.json"
+        },
+        {
+            "name":"Sphere-162",
+            "model_url":"models/sphere-162_79707.ori.json"
+        }
+    ]
+}
