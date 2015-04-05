@@ -15,7 +15,7 @@ function init()
     controls.keys = { LEFT: 39, UP: 40, RIGHT: 37, BOTTOM: 38 };
 
     controls.rotateSpeed = 2.0;
-    controls.zoomSpeed = 1.0;
+    controls.zoomSpeed = 0.5;
 
     controls.noZoom = false;
     controls.noPan = false;
@@ -44,14 +44,14 @@ function init()
     scene.add( lights[2] );
 
     materials = [ 
-        // new THREE.MeshPhongMaterial( { 
-        //     color: 0x996633, 
-        //     specular: 0x050505,
-        //     shininess: 10
-        // }),
-        new THREE.MeshLambertMaterial({
+        new THREE.MeshPhongMaterial( { 
             color: 0x996633, 
+            specular: 0x050505,
+            shininess: 50
         }),
+        // new THREE.MeshLambertMaterial({
+        //     color: 0x996633, 
+        // }),
         new THREE.MeshBasicMaterial({
             color: 0x000000, 
             wireframe: true, 
@@ -162,6 +162,12 @@ $(document).keypress(function(event) {
         // 'e'
         case 101:
             edges.visible = !edges.visible;
+            break;
+        // 't'
+        case 116:        
+            materials[0].opacity = materials[0].opacity == 1.0 ? 0.5 : 1.0;            
+            materials[0].transparent = materials[0].opacity == 1.0 ? false : true;
+            break;
         default:
             break;
     }    

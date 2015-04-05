@@ -13,6 +13,16 @@
         {
             "name":"Sphere-162",
             "model_url":"models/sphere-162_79707.ori.json"
+        },
+        {
+            "name":"cube",
+            "model_url":"models/cube2_273018.ori.json",
+            "traj_url":"models/cube2_273018_1428273447.trj.json"
+        },
+        {
+            "name":"cube-ordered",
+            "model_url":"models/cube2_273018.ori.json",
+            "traj_url":"models/cube2_273018_1428273052.trj.json"
         }
     ]
 }
