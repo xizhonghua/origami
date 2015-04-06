@@ -211,10 +211,15 @@ Origami.Model.prototype.foldToPercentage = function(percentage) {
         }
 
         // percentage per cfg
-        var ppc = 1.0 / this.folding_path.length;
+        var ppc = 1.0 / (this.folding_path.length-1);
         var index = Math.floor(percentage / ppc);
         // percentage in between two cfgs
         var pib = (percentage - index * ppc) / ppc;
+
+        // if(index+1 == this.folding_path.length)
+        // {
+        //     console.log("index")
+        // }
 
         cfg.linearBlend(this.folding_path[index], this.folding_path[index+1], pib);
 
