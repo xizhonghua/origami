@@ -23,6 +23,11 @@
             "name":"cube-ordered",
             "model_url":"models/cube2_273018.ori.json",
             "traj_url":"models/cube2_273018_1428273052.trj.json"
+        },
+        {
+            "name":"star-024",
+            "model_url":"models/star-024_18811.ori.json",
+            "traj_url":"models/star-024_18811_1428281430.trj.json"
         }
     ]
 }
