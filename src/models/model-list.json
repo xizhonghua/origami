@@ -6,6 +6,11 @@
             "traj_url":"models/bunny-128_94716_1427762975.trj.json"
         },
         {
+            "name":"Periscope",
+            "model_url":"models/periscope.ori.json",
+            "traj_url":"models/periscope_1428327072.trj.json"
+        },
+        {
             "name":"Periscope2",
             "model_url":"models/periscope2.ori.json",
             "traj_url":"models/periscope2_1427035284.trj.json"
