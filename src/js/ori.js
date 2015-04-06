@@ -85,7 +85,7 @@ Origami.Model.prototype.load = function(model_url, traj_url, callback) {
 
     $.getJSON(model_url, function(model, textStatus) {
 
-        consolog.log("model = " + model_url + " loaded!");
+        console.log("model = " + model_url + " loaded!");
         
         // build the model
         me.build(model);
@@ -97,7 +97,7 @@ Origami.Model.prototype.load = function(model_url, traj_url, callback) {
         else {
             $.getJSON(traj_url, function(data, textStatus) {
 
-                consolog.log("traj = " + traj_url + " loaded!");
+                console.log("traj = " + traj_url + " loaded!");
 
                 me.folding_path = data.trajs;
                 my_callback(me);
