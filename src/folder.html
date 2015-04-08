@@ -76,10 +76,23 @@
         <script src='js/ori.js'></script>
         <script src='js/folder.js'></script>      
         <script>
+        
+        // by default use github as CDN
+        var use_cdn = (getParameterByName("cdn") == "0") ? false : true;
+
+        var cdn_prefix = 'https://cdn.rawgit.com/xizhonghua/origami/master/src/';
+
         $.getJSON("models/model-list.json", function(data, textStatus){            
             for(var i=0;i<data.models.length;++i)
             {
                 var model = data.models[i];
+
+                if (use_cdn) {
+                    model.model_url = cdn_prefix + model.model_url;
+                    if(model.traj_url) 
+                        model.traj_url = cdn_prefix + model.traj_url;
+                }
+
                 $("<button></button>").attr(
                     {
                         "type" : "button",
