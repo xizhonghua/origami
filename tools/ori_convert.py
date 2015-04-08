@@ -92,13 +92,18 @@ def main():
     if len(sys.argv) < 2:
         print sys.argv[0], '*.ori / *.trj'
     else:
-        filename = sys.argv[1]
-        if filename.endswith('.ori'):
-            convert_ori_to_json(filename, filename+'.json')
-        elif filename.endswith('.trj'):
-            convert_traj_to_json(filename, filename+'.json')
-        else:
-            print 'unknown file type', filename
+        for filename in sys.argv:
+            if filename == sys.argv[0]: continue
+            if filename.startswith('-'): continue
+            
+            if filename.endswith('.ori'):
+                convert_ori_to_json(filename, filename+'.json')
+            elif filename.endswith('.trj'):
+                convert_traj_to_json(filename, filename+'.json')
+            elif filename.endswith('.json'):
+                print 'skipping', filename
+            else:
+                print 'unknown file type', filename
 
 if __name__ == '__main__':
     main()

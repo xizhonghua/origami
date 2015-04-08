@@ -6,6 +6,11 @@
             "traj_url":"models/bunny-128_94716_1427762975.trj.json"
         },
         {
+            "name":"MoneyBox",
+            "model_url":"models/moneybox-128.ori.json", 
+            "traj_url":"models/moneybox-128.trj1.json"
+        },
+        {
             "name":"Periscope",
             "model_url":"models/periscope.ori.json",
             "traj_url":"models/periscope_1428327072.trj.json"
@@ -16,8 +21,13 @@
             "traj_url":"models/periscope2_1427035284.trj.json"
         },
         {
-            "name":"Sphere-162",
+            "name":"Sphere1",
             "model_url":"models/sphere-162_79707.ori.json"
+        },
+        {
+            "name":"Sphere2",
+            "model_url":"models/sphere-deformed-5.ori.json",
+            "traj_url":"models/sphere-deformed-5.trj.json"  
         },
         {
             "name":"cube",
@@ -33,6 +43,11 @@
             "name":"star-024",
             "model_url":"models/star-024_18811.ori.json",
             "traj_url":"models/star-024_18811_1428281430.trj.json"
+        },
+        {
+            "name":"star-4",
+            "model_url":"models/star-4split.ori.json",
+            "traj_url":"models/star-4split.trj.json"
         }
     ]
 }
