@@ -7,7 +7,7 @@ var delay_p = 0.1*max_p;
 function init()
 {
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.01, 1000 );
+    camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.01, 1000 );
 
     controls = new THREE.OrbitControls( camera );
 
@@ -15,7 +15,7 @@ function init()
     controls.keys = { LEFT: 39, UP: 40, RIGHT: 37, BOTTOM: 38 };
 
     controls.rotateSpeed = 2.0;
-    controls.zoomSpeed = 0.5;
+    controls.zoomSpeed = 1.0;
 
     controls.noZoom = false;
     controls.noPan = false;
@@ -23,7 +23,7 @@ function init()
     renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
-    renderer.setClearColor( 0xffffff, 0.5 );
+    renderer.setClearColor( 0xffffff, 0.6 );
 
     document.body.appendChild( renderer.domElement );
 
@@ -63,7 +63,7 @@ function init()
 
 }
 
-function loadModel(model_url, traj_url)
+function loadModel(model_url, traj_url, callback)
 {
     // first remove existing model
     removeModel();
@@ -83,12 +83,8 @@ function loadModel(model_url, traj_url)
         edges.name = 'edges';
         scene.add( mesh );
         scene.add( edges );
-        
-        
-        camera.position.z = origami.geometry.boundingSphere.radius * 3;
-        controls.rotateUp(1.57);
-        controls.rotateLeft(1.57);
-        controls.update();
+                
+        resetCamera();
 
         animation_step = 1;
 
@@ -99,7 +95,20 @@ function loadModel(model_url, traj_url)
         animation = true;
 
         if(!rendered) render();
+
+        if(callback) callback();
     });
+}
+
+function resetCamera()
+{
+    camera.position.z = origami.geometry.boundingSphere.radius * 3;
+    camera.position.x = 0;
+    camera.position.y = 0;
+    camera.rotation.set(0,0,0);
+    controls.rotateUp(0.8);
+    // controls.rotateLeft(1.57);
+    controls.update();
 }
 
 function removeModel()
@@ -143,8 +152,12 @@ $( window ).resize(function() {
 });
 
 $(document).keypress(function(event) {
+
+    console.log(event.charCode);
+
     switch(event.charCode)
     {
+
         //space
         case 32: 
             animation = !animation;            
@@ -158,6 +171,16 @@ $(document).keypress(function(event) {
         case 46:
             percentage = Math.max(0, percentage-3*animation_step);
             animation = false;
+            break;
+        // '[' : faster
+        case 91:
+            animation_step = animation_step*1.4;
+            animation_step = Math.min(animation_step, 30);
+            break;
+        // ']' : slower
+        case 93:
+            animation_step = animation_step/1.4;
+            animation_step = Math.max(animation_step, 0.1);
             break;
         // 'e'
         case 101:
