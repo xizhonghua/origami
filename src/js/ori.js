@@ -50,7 +50,7 @@ Origami.Model = function() {
     this.faces = [];
 
     //  creases, array of Origami.Crease
-    this.creases = [];
+    this.creases = [];    
 
     // array of array of folding angles
     this.folding_path = [];
@@ -242,6 +242,16 @@ Origami.Model.prototype.foldToPercentage = function(percentage) {
     this.foldTo(cfg);
 };
 
+Origami.Model.prototype.isCrease = function(vid1, vid2) {
+    for(var i=0;i<this.creases.length;++i)
+    {
+        var c = this.creases[i];
+        if((c.vid1 == vid1 && c.vid2 == vid2) || (c.vid1 == vid2 && c.vid2 == vid1))
+            return true;
+    }
+    return false;
+}
+
 // fold the origami to given configuration
 Origami.Model.prototype.foldTo = function(cfg) {
 
@@ -320,25 +330,54 @@ Origami.Model.prototype.drawSVG = function(svg) {
     var size = this.geometry.boundingBox.size();
     var width = size.x;
     var height = size.z;
-    var strokeWidth = Math.max(width, height)*0.002;
+    var strokeWidth = Math.max(width, height)*0.0015;
 
     console.log(size);
 
-    var g = svg.group({stroke: 'black', strokeWidth: strokeWidth}); 
+    // create a new path
+    var path = svg.createPath();
 
+    // boundary
     for(var i=0;i<this.faces.length;++i)
     {
         for(var j=1;j<=3;++j)
         {
-            var v1 = this.flat_vertices[this.faces[i].vids[j-1]];
-            var v2 = this.flat_vertices[this.faces[i].vids[j%3]];
-            //output += template.format(v1.x, v1.z, v2.x, v2.z, 'test');
-            svg.line(g, v1.x, v1.z, v2.x, v2.z);
+            var vid1 = this.faces[i].vids[j-1];
+            var vid2 = this.faces[i].vids[j%3];
+            var v1 = this.flat_vertices[vid1];
+            var v2 = this.flat_vertices[vid2];
+
+            if(this.isCrease(vid1, vid2)) continue;
+
+            path.move(v1.x, v1.z).line(v2.x, v2.z);
         }
     }
 
+    svg.path(path, {fill: 'none', stroke: '#000000', strokeWidth: strokeWidth*1.5});
+
+    path = svg.createPath();
+
+    // crease lines
+    for(var i=0;i<this.creases.length;++i)
+    {
+        var c = this.creases[i];
+        var v1 = this.flat_vertices[c.vid1];
+        var v2 = this.flat_vertices[c.vid2];
+        path.move(v1.x, v1.z).line(v2.x, v2.z);
+    }
+
+    svg.path(path, {
+        fill: 'none', 
+        stroke: '#999', 
+        'stroke-dasharray' : '' + strokeWidth*3 + ',' + strokeWidth*3,
+        strokeWidth: strokeWidth
+    });    
+    
     // fold back
     this.foldTo(back_cfg);    
 }
 
-
+/// split the model into two by cutting along the given crease line
+Origami.Model.prototype.split = function(creaseId) {
+    //TODO
+}
