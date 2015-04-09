@@ -1,12 +1,19 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>Net Spliiter</title>
-        <script src='https://code.jquery.com/jquery-2.1.3.min.js'></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
+        <title>Net Spliiter</title>    
         <link rel="stylesheet" type="text/css" href="style/main.css">
         <link rel="stylesheet" type="text/css" href="style/svg.css">
         <link rel="stylesheet" type="text/css" href="style/jquery.svg.css">
+
+        <script src='https://code.jquery.com/jquery-2.1.3.min.js'></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
+        <script src="js/svg/jquery.svg.min.js"></script>
+        <script src='js/extension.js'></script>
+        <script src="js/geometry.js"></script>
+        <script src='js/ori.js'></script>
+        <script src='js/net-spliiter.js'></script>
+
     </head>
     <body>
         <div id="canvas" style="position:absolute; top:100px; border:1px solid #999;">
@@ -16,117 +23,136 @@
         <div id="title">
             Net-Splitter
         </div>
-        <script src='js/extension.js'></script>
-        <script src='js/ori.js'></script>
-        <script src='js/net-spliiter.js'></script>
-        <script src="js/svg/jquery.svg.min.js"></script>
-        <script>
 
-        var app_name = "Net-Splitter"
+        <script type="text/javascript">
+        var app_name = "Net-Splitter";
+        var highlighted_crease = null;
 
-            $("#canvas").svg();
 
-            var svg = $('#canvas').svg('get');
+        $("#canvas").svg();
 
-            svg.configure({id: 'raw-svg'});         
+        var svg = $('#canvas').svg('get');
 
-            var raw_svg = $('#raw-svg').get(0);
+        svg.configure({id: 'raw-svg'});         
 
-            var origami = new Origami.Model();
+        var raw_svg = $('#raw-svg').get(0);
 
-            function draw()
+        var origami = new Origami.Model();
+
+
+        // draw the origami as svg
+        function draw()
+        {
+            // clear exisiting drawing
+            svg.clear(true);
+            origami.drawSVG(svg);
+            var bbox = origami.geometry.boundingBox;
+            var width = bbox.max.x - bbox.min.x;
+            var height = bbox.max.z - bbox.min.z;
+            var viewBox = "{0} {1} {2} {3}".format(bbox.min.x-width*0.1, bbox.min.z-height*0.1, width*1.2, height*1.2);
+            var max_wdith = $(window).width() * 0.9;
+            var max_height = ($(window).height() - 100) * 0.9;
+            var max_scle = Math.min(max_wdith/width, max_height/height);
+            var svg_width = width*max_scle;          
+
+            svg.configure({id: 'raw-svg', viewBox: viewBox, width: svg_width}, true);                
+
+            var left = ($(window).width() - svg_width)/2;
+
+            console.log('dw = ' + $(window).width() + ' sw = ' + svg_width + ' left = ' + left);
+
+            // center the svg canvas
+            $("#canvas").css({left : left});
+        }         
+
+        // load the model list
+        $.getJSON("models/model-list.json", function(data, textStatus){            
+        
+            for(var i=0;i<data.models.length;++i)
             {
-                // clear exisiting drawing
-                svg.clear(true);
-                origami.drawSVG(svg);
-                var bbox = origami.geometry.boundingBox;
-                var width = bbox.max.x - bbox.min.x;
-                var height = bbox.max.z - bbox.min.z;
-                var viewBox = "{0} {1} {2} {3}".format(bbox.min.x-width*0.1, bbox.min.z-height*0.1, width*1.2, height*1.2);
-                var max_wdith = $(document).width() * 0.9;
-                var max_height = ($(document).height() - 100) * 0.9;
-                var max_scle = Math.min(max_wdith/width, max_height/height);
-                var svg_width = width*max_scle;                
+                var model = data.models[i];                    
 
-                svg.configure({id: 'raw-svg', viewBox: viewBox, width: svg_width}, true);
+                $("<button></button>").attr(
+                    {
+                        "type" : "button",
+                        "model" : model.model_url,
+                        "traj" : model.traj_url,
+                        "model-name" : model.name
+                    }
+                ).html(model.name).appendTo($("#model-selector"));
+            }
 
-                // center the svg canvas
-                $("#canvas").css({left : ($(document).width() - svg_width)/2});
-            } 
+            $("button").click(function() {
+                model_url = $(this).attr("model");
+                traj_url = $(this).attr("traj");
+                model_name = $(this).attr("model-name");
+                $("#title").html(app_name + " - loading...");
+                origami.load(model_url, null, function(){
+                    $("#title").html(app_name + " - " + model_name)
+                    .css("left", ($(document).width()-$("#title").width())/2);
 
-            $.getJSON("models/model-list.json", function(data, textStatus){            
-            
-                for(var i=0;i<data.models.length;++i)
-                {
-                    var model = data.models[i];                    
+                    // will be removed automatically, set it to null
+                    highlighted_crease = null;
 
-                    $("<button></button>").attr(
-                        {
-                            "type" : "button",
-                            "model" : model.model_url,
-                            "traj" : model.traj_url,
-                            "model-name" : model.name
-                        }
-                    ).html(model.name).appendTo($("#model-selector"));
-                }
-
-                $("button").click(function() {
-                    model_url = $(this).attr("model");
-                    traj_url = $(this).attr("traj");
-                    model_name = $(this).attr("model-name");
-                    $("#title").html(app_name + " - loading...");
-                    origami.load(model_url, null, function(){
-                        $("#title").html(app_name + " - " + model_name)
-                        .css("left", ($(document).width()-$("#title").width())/2);
-
-                        draw();
-                    });
-                });
-
-                // load the first model
-                $("button")[0].click();
-            });                            
-
-            $("html").on("dragover", function(event) {
-                event.preventDefault();  
-                event.stopPropagation();
-                //$(this).addClass('dragging');
-            });
-
-            $("html").on("dragleave", function(event) {
-                event.preventDefault();  
-                event.stopPropagation();
-                //$(this).removeClass('dragging');
-            });
-
-            $("html").on("drop", function(event) {
-                event.preventDefault();  
-                event.stopPropagation();
-                var files = event.originalEvent.dataTransfer.files;
-                if(!files) return;
-
-                // only read the first file
-                var file = files[0];
-                if(file.name.indexOf('.json')==-1) return;
-                var reader = new FileReader();
-
-                reader.onload = function(e) {
-                    var text = reader.result;
-                    var obj = $.parseJSON(text);
-                    origami.build(obj);
                     draw();
-                }
-
-                reader.readAsText(file, 'UTF-8');
+                });
             });
 
-            $('#raw-svg').mousemove(function(event) {
-                // Create an SVGPoint for future math
-                var pt = raw_svg.createSVGPoint();
-                pt.x = event.clientX; pt.y = event.clientY;
-                var gt = pt.matrixTransform(raw_svg.getScreenCTM().inverse());
-                // console.log(gt);
-            });
+            // load the first model
+            $("button")[0].click();
+        });                            
+
+        $("html").on("dragover", function(event) {
+            event.preventDefault();  
+            event.stopPropagation();
+            //$(this).addClass('dragging');
+        });
+
+        $("html").on("dragleave", function(event) {
+            event.preventDefault();  
+            event.stopPropagation();
+            //$(this).removeClass('dragging');
+        });
+
+        $("html").on("drop", function(event) {
+            event.preventDefault();  
+            event.stopPropagation();
+            var files = event.originalEvent.dataTransfer.files;
+            if(!files) return;
+
+            // only read the first file
+            var file = files[0];
+            if(file.name.indexOf('.json')==-1) return;
+            var reader = new FileReader();
+
+            reader.onload = function(e) {
+                var text = reader.result;
+                var obj = $.parseJSON(text);
+                origami.build(obj);
+                draw();
+            }
+
+            reader.readAsText(file, 'UTF-8');
+        });
+
+        // mouse move event handler
+        $('#raw-svg').mousemove(function(event) {            
+            if(!origami) return;
+
+            // Create an SVGPoint for future math
+            var pt = raw_svg.createSVGPoint();
+            pt.x = event.clientX; pt.y = event.clientY;
+            var gt = pt.matrixTransform(raw_svg.getScreenCTM().inverse());
+            console.log(gt);
+            if(highlighted_crease)
+            {         
+                svg.remove(highlighted_crease);
+                highlighted_crease = null;
+            }
+            var cid = origami.getCrease(gt);
+            if(cid==-1) return;
+            highlighted_crease = origami.highLightCrease(svg, cid);
+        });
         </script>    
     </body>
 </html>

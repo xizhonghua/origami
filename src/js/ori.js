@@ -76,6 +76,9 @@ Origami.Model = function() {
 
     // current cfg
     this.cur_cfg = [];
+
+    // svg_cfg
+    this.svg_cfg = {};
 }
 
 Origami.Model.prototype.load = function(model_url, traj_url, callback) {
@@ -366,26 +369,74 @@ Origami.Model.prototype.drawSVG = function(svg) {
         path.move(v1.x, v1.z).line(v2.x, v2.z);
     }
 
+    var strokeDashArray = '' + strokeWidth*3 + ',' + strokeWidth*3;
+
     svg.path(path, {
         fill: 'none', 
         stroke: '#999', 
-        'stroke-dasharray' : '' + strokeWidth*3 + ',' + strokeWidth*3,
+        'stroke-dasharray' : strokeDashArray,
         strokeWidth: strokeWidth
     });    
     
     // fold back
     this.foldTo(back_cfg);    
+
+
+    this.svg_cfg = {
+        width : width,
+        height : height,
+        strokeWidth : strokeWidth,
+        strokeDashArray : strokeDashArray
+    };
 }
 
-// get a crease line that close x,y
-Origami.Model.prototype.getCrease = function(x, y) {
+/// create a highlighted crease in svg
+/// return the new node
+Origami.Model.prototype.highLightCrease = function(svg, cid) {
+
+    var c = this.creases[cid];
+    var v1 = this.flat_vertices[c.vid1];    
+    var v2 = this.flat_vertices[c.vid2];
+    
+    var node = svg.line(v1.x, v1.z, v2.x, v2.z, {
+        stroke: '#ff0000', 
+        'stroke-dasharray' : this.svg_cfg.strokeDashArray,
+        strokeWidth: this.svg_cfg.strokeWidth*2
+    });
+
+    return node;
+}
+
+// get a crease line that close p {x, y}
+// requires geometry.js
+Origami.Model.prototype.getCrease = function(p) {
+
+    var min_dist = 1e10;
+    var threshold = 0.01 * Math.max(this.svg_cfg.width, this.svg_cfg.height);
+    var cid = -1;
 
     for(var i=0;i<this.creases.length;++i)
     {
         var c = this.creases[i];
         var v1 = this.flat_vertices[c.vid1];
         var v2 = this.flat_vertices[c.vid2];
+        
+        var v = { x: v1.x, y : v1.z };
+        var w = { x: v2.x, y : v2.z };
+        
+
+        var dist = distToSegment(p, v, w)
+
+        if(dist < min_dist)
+        {
+            min_dist = dist;
+            cid = i;
+        }
     }
+
+    if(min_dist > threshold) return -1;
+
+    return cid;
 }
 
 /// split the model into two by cutting along the given crease line
