@@ -23,7 +23,7 @@ function init()
     renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
-    renderer.setClearColor( 0xffffff, 0.6 );
+    renderer.setClearColor( 0xaaaaaa, 1.0 );
 
     document.body.appendChild( renderer.domElement );
 
@@ -115,6 +115,11 @@ function removeModel()
 {
     var mesh = scene.getObjectByName('mesh');
     var edges = scene.getObjectByName('edges');
+
+    // prevent memory leak
+    if(mesh) mesh.geometry.dispose();
+    if(edges) edges.geometry.dispose();
+    
     scene.remove( mesh );
     scene.remove( edges );
 }

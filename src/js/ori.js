@@ -2,6 +2,7 @@
 //  jQuery
 //  Three.js
 //  js/extension.js
+//  js/svg/jquery.svg.min.js
 
 // namespace
 var Origami = Origami || {};
@@ -70,7 +71,11 @@ Origami.Model = function() {
     // three js geometry
     this.geometry = null;
 
+    // whether the model is loaded or not
     this.loaded = false;
+
+    // current cfg
+    this.cur_cfg = [];
 }
 
 Origami.Model.prototype.load = function(model_url, traj_url, callback) {
@@ -99,7 +104,7 @@ Origami.Model.prototype.load = function(model_url, traj_url, callback) {
 
                 console.log("traj = " + traj_url + " loaded!");
 
-                me.folding_path = data.trajs;
+                me.setFoldingPath(data.trajs);
                 my_callback(me);
             });
         }
@@ -167,6 +172,8 @@ Origami.Model.prototype.build = function(model) {
         this.goal_cfg.push(this.creases[i].folding_angle);
     }
 
+    this.cur_cfg = this.start_cfg.clone();
+
     this.buildThreeGeometry();
 
     
@@ -194,8 +201,8 @@ Origami.Model.prototype.buildThreeGeometry = function() {
     this.updateGeometry();
 }
 
-// add folding path data
-Origami.Model.prototype.addFoldingPath = function(path) {    
+// set folding path
+Origami.Model.prototype.setFoldingPath = function(path) {    
     this.folding_path = path;
 };
 
@@ -237,6 +244,9 @@ Origami.Model.prototype.foldToPercentage = function(percentage) {
 
 // fold the origami to given configuration
 Origami.Model.prototype.foldTo = function(cfg) {
+
+    // update cur cfg
+    this.cur_cfg = cfg.clone();
 
     // folding matrices
     ms = [];
@@ -280,6 +290,7 @@ Origami.Model.prototype.foldTo = function(cfg) {
     this.updateGeometry();
 };
 
+// update the threejs geometry once folded
 Origami.Model.prototype.updateGeometry = function() {
 
     if(!this.geometry) return;
@@ -293,3 +304,41 @@ Origami.Model.prototype.updateGeometry = function() {
     this.geometry.verticesNeedUpdate = true;
     this.geometry.normalsNeedUpdate = true;
 }
+
+// draw model on the svg object
+// requires: js/svg/jquery.svg.min.js
+Origami.Model.prototype.drawSVG = function(svg) {
+
+    var back_cfg = this.cur_cfg.clone();
+
+    // fold to flat
+    this.foldToPercentage(0.0);
+
+    // compute bounding box
+    this.geometry.computeBoundingBox();
+
+    var size = this.geometry.boundingBox.size();
+    var width = size.x;
+    var height = size.z;
+    var strokeWidth = Math.max(width, height)*0.002;
+
+    console.log(size);
+
+    var g = svg.group({stroke: 'black', strokeWidth: strokeWidth}); 
+
+    for(var i=0;i<this.faces.length;++i)
+    {
+        for(var j=1;j<=3;++j)
+        {
+            var v1 = this.flat_vertices[this.faces[i].vids[j-1]];
+            var v2 = this.flat_vertices[this.faces[i].vids[j%3]];
+            //output += template.format(v1.x, v1.z, v2.x, v2.z, 'test');
+            svg.line(g, v1.x, v1.z, v2.x, v2.z);
+        }
+    }
+
+    // fold back
+    this.foldTo(back_cfg);    
+}
+
+

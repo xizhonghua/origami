@@ -7,43 +7,7 @@
         <title>Origami Folder</title>
         <script src='https://code.jquery.com/jquery-2.1.3.min.js'></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
-        <style>
-            body {
-                margin: 0px;
-                background-color: #ffffff;
-                overflow: hidden;
-            }
-            canvas { width: 100%; height: 100% }
-            #model-selector {
-                position: absolute;
-                top:10px;
-                left:10px;
-                max-width: 240px;
-            }
-            #help {
-                position: absolute;
-                top:4px;
-                right: 4px;
-                font-size:13\2px;
-                padding:4px;
-                background-color: rgba(255, 255, 255, 0.4);                
-            }
-            #copyright {
-                position: absolute;
-                bottom:4px;
-                right:4px;
-                font-size:12px;
-            }       
-            #title {
-                position: absolute;
-                top:4px;
-                left:45%;                
-                font-weight: bold;                
-            }
-            table {
-                font-size:14px;
-            }
-        </style>
+        <link  rel="stylesheet" type="text/css" href="style/main.css">
     </head>
     <body>        
         <div id="model-selector">           
@@ -66,13 +30,7 @@
 
             </table>
         </div>
-        <div id="copyright">
-            <a href="http://masc.cs.gmu.edu/wiki/UnfoldingPolyhedra" target="_blank">Project Website</a> | 
-            <a href="https://github.com/xizhonghua/origami" target="_blank">Github</a> | 
-            &copy;
-            <a href="http://cs.gmu.edu" target="_blank">GMU</a> -
-            <a href="http://masc.cs.gmu.edu/wiki" target="_blank">MASC</a> -
-            <a href="http://masc.cs.gmu.edu/wiki/ZhonghuaXi" target="_blank">Zhonghua Xi</a>
+        <div id="copyright" source="copyright.html">            
         </div>
         <script src="js/OrbitControls.js"></script>
         <script src='js/extension.js'></script>
@@ -81,12 +39,17 @@
         <script>
         var app_name = 'Origami Folder';
 
+        $('div[source]').each(function(index){
+            $(this).load($(this).attr('source'));
+        });
+
         // by default use github as CDN
         var use_cdn = (getParameterByName("cdn") == "0") ? false : true;
 
         var cdn_prefix = 'https://cdn.rawgit.com/xizhonghua/origami/master/src/';
 
         $.getJSON("models/model-list.json", function(data, textStatus){            
+            
             for(var i=0;i<data.models.length;++i)
             {
                 var model = data.models[i];
@@ -106,6 +69,7 @@
                     }
                 ).html(model.name).appendTo($("#model-selector"));
             }
+
             $("button").click(function() {
                 model_url = $(this).attr("model");
                 traj_url = $(this).attr("traj");
@@ -116,6 +80,8 @@
                     .css("left", ($(document).width()-$("#title").width())/2);
                 });
             });
+
+            // load the first model
             $("button")[0].click();
         });                
 
