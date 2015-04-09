@@ -9,9 +9,12 @@
         <link rel="stylesheet" type="text/css" href="style/jquery.svg.css">
     </head>
     <body>
-        <div id="canvas" style="position:absolute; top:100px; left:100px; border:1px solid #999;">
+        <div id="canvas" style="position:absolute; top:100px; border:1px solid #999;">
         </div>
         <div id="model-selector">        
+        </div>
+        <div id="title">
+            Net-Splitter
         </div>
         <script src='js/extension.js'></script>
         <script src='js/ori.js'></script>
@@ -22,7 +25,12 @@
         var app_name = "Net-Splitter"
 
             $("#canvas").svg();
+
             var svg = $('#canvas').svg('get');
+
+            svg.configure({id: 'raw-svg'});         
+
+            var raw_svg = $('#raw-svg').get(0);
 
             var origami = new Origami.Model();
 
@@ -35,10 +43,15 @@
                 var width = bbox.max.x - bbox.min.x;
                 var height = bbox.max.z - bbox.min.z;
                 var viewBox = "{0} {1} {2} {3}".format(bbox.min.x-width*0.1, bbox.min.z-height*0.1, width*1.2, height*1.2);
+                var max_wdith = $(document).width() * 0.9;
+                var max_height = ($(document).height() - 100) * 0.9;
+                var max_scle = Math.min(max_wdith/width, max_height/height);
+                var svg_width = width*max_scle;                
 
-                var svg_width = width > height ? 600 : 600 / height * width;
+                svg.configure({id: 'raw-svg', viewBox: viewBox, width: svg_width}, true);
 
-                svg.configure({viewBox: viewBox, width: svg_width}, true);
+                // center the svg canvas
+                $("#canvas").css({left : ($(document).width() - svg_width)/2});
             } 
 
             $.getJSON("models/model-list.json", function(data, textStatus){            
@@ -105,6 +118,14 @@
                 }
 
                 reader.readAsText(file, 'UTF-8');
+            });
+
+            $('#raw-svg').mousemove(function(event) {
+                // Create an SVGPoint for future math
+                var pt = raw_svg.createSVGPoint();
+                pt.x = event.clientX; pt.y = event.clientY;
+                var gt = pt.matrixTransform(raw_svg.getScreenCTM().inverse());
+                // console.log(gt);
             });
         </script>    
     </body>

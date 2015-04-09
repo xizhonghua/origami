@@ -377,6 +377,17 @@ Origami.Model.prototype.drawSVG = function(svg) {
     this.foldTo(back_cfg);    
 }
 
+// get a crease line that close x,y
+Origami.Model.prototype.getCrease = function(x, y) {
+
+    for(var i=0;i<this.creases.length;++i)
+    {
+        var c = this.creases[i];
+        var v1 = this.flat_vertices[c.vid1];
+        var v2 = this.flat_vertices[c.vid2];
+    }
+}
+
 /// split the model into two by cutting along the given crease line
 Origami.Model.prototype.split = function(creaseId) {
     //TODO
