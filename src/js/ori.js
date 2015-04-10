@@ -242,18 +242,18 @@ Origami.Model.prototype.foldToPercentage = function(percentage) {
     this.foldTo(cfg);
 };
 
-Origami.Model.prototype.getCrease = function(vid1, vid2) {
-    for(var i=0;i<this.creases.length;++i)
+Origami.Model.prototype.getCrease = function(cids, vid1, vid2) {
+    for(var i=0;i<cids.length;++i)
     {
-        var c = this.creases[i];
+        var c = this.creases[cids[i]];
         if((c.vid1 == vid1 && c.vid2 == vid2) || (c.vid1 == vid2 && c.vid2 == vid1))
             return c;
     }
     return null;
 }
 
-Origami.Model.prototype.isCrease = function(vid1, vid2) {
-    return (this.getCrease(vid1, vid2) != null);
+Origami.Model.prototype.isCrease = function(cids, vid1, vid2) {
+    return (this.getCrease(cids, vid1, vid2) != null);
 }
 
 // fold the origami to given configuration
@@ -326,6 +326,8 @@ Origami.Model.prototype.drawSVG = function(svg) {
     var fs = range(this.faces.length);
     var cs = range(this.creases.length);
     this.svg_cfg = this.drawSVGImpl(svg, fs, cs);    
+
+    return this.svg_cfg;
 }
 
 // compute bounding box based on faces (array of face ids)
@@ -351,9 +353,13 @@ Origami.Model.prototype.computeBoundingBox = function(fids) {
     return box;
 }
 
-// draw svg for given faces and creases indexing original net
+// draw svg for given fids and cids indexing the original net
 Origami.Model.prototype.drawSVGImpl = function(svg, fids, cids){
     
+    svg.clear();
+
+    console.log('drawSVGImpl faces = ' + fids.length + ' creases = ' + cids.length );
+
     // compute bounding box from faces
     var box = this.computeBoundingBox(fids);
 
@@ -375,7 +381,7 @@ Origami.Model.prototype.drawSVGImpl = function(svg, fids, cids){
             var v1 = this.flat_vertices[vid1];
             var v2 = this.flat_vertices[vid2];
 
-            if(this.isCrease(vid1, vid2)) continue;
+            if(this.isCrease(cids, vid1, vid2)) continue;
 
             path.move(v1.x, v1.z).line(v2.x, v2.z);
         }
@@ -409,6 +415,10 @@ Origami.Model.prototype.drawSVGImpl = function(svg, fids, cids){
         strokeWidth : strokeWidth,
         strokeDashArray : strokeDashArray
     };
+   
+    var viewBox = "{0} {1} {2} {3}".format(box.min.x-width*0.1, box.min.z-height*0.1, width*1.2, height*1.2);    
+
+    svg.configure({viewBox: viewBox, width:200}, true);
 
     return svg_cfg;
 }
@@ -467,18 +477,21 @@ Origami.Model.prototype.getClosestCrease = function(p) {
 }
 
 /// split the model into two by cutting along the given crease line
-Origami.Model.prototype.split = function(cid) {
+Origami.Model.prototype.split = function(cid, svg1, svg2) {
 
     // the splitting crease
     var crease = this.creases[cid];
 
     var fids1 = [];
     var fids2 = [];
-    var cids = [];
+    var cids1 = [];
+    var cids2 = [];
 
     var q = [crease.fid];
     var visited = [];
     visited[crease.fid] = true;
+
+    var all_cids = range(this.creases.length);
 
     while(q.length) {
         var head_fid = q.shift();
@@ -487,9 +500,12 @@ Origami.Model.prototype.split = function(cid) {
         {
             var vid1 = this.faces[head_fid].vids[i-1];
             var vid2 = this.faces[head_fid].vids[i%3];
-            var c = this.getCrease(vid1, vid2);
+            var c = this.getCrease(all_cids, vid1, vid2);
             if(!c) continue;
             if(visited[c.fid]) continue;
+
+            var _cid = this.creases.indexOf(c);
+            if(_cid !== cid) cids1.push(_cid);
 
             // put that crease's face into queue
             q.push(c.fid);
@@ -497,5 +513,22 @@ Origami.Model.prototype.split = function(cid) {
         }
     }
 
-    console.log(fids1);
+    for(var i=0;i<this.faces.length;++i)    
+        if(fids1.indexOf(i)==-1) fids2.push(i);
+    
+    for(var i=0;i<this.creases.length;++i)    
+        if(cids1.indexOf(i)==-1 && i!=cid) cids2.push(i);
+
+    this.drawSVGImpl(svg1, fids1, cids1);
+    this.drawSVGImpl(svg2, fids2, cids2);
+
+
+    // console.log(fids1);
+    // console.log(cids1);
+
+    // console.log(fids2);
+    // console.log(cids2);
+
+
+
 }
