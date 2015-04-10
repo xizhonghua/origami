@@ -21,7 +21,7 @@
 
 | Net-Spliiter  |
 |:---------------:| 
-| ![Folder](/screenshot/netnet-splitter.png) |
+| ![Folder](/screenshot/net-splitter.png) |
 
 ### Live Deom
 * [Net Splitter](http://masc.cs.gmu.edu/origami/net.html)
