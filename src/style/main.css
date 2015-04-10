@@ -20,6 +20,37 @@ table {
     font-size:14px;
 }
 
+.center {
+    margin:0 auto;
+    text-align: center;
+}
+
+.absolute-center {
+  margin: auto;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+}
+
+.w400 {
+    width:400px;
+}
+
+.h200 {
+    height:200px;
+}
+
+.margin4 {
+    margin:4px;
+}
+
+.svg-canvas {
+    border:1px solid #333;
+}
+
+.hidden {
+    display: none;
+}
+
 #model-selector {
     position: absolute;
     top:10px;

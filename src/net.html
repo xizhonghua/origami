@@ -15,21 +15,44 @@
         <script src='js/net-spliiter.js'></script>
 
     </head>
-    <body>
-        <div id="canvas" style="position:absolute; top:100px; border:1px solid #999;">
-        </div>        
-        <div id="model-selector">        
+    <body>        
+        <div id="models" class="center w400 h200 absolute-center">            
+            <h1 class="margin4">Drop Net Here</h1> 
+            <h3>Or Start With Following Nets</h3>           
         </div>
         <div id="title">
             Net-Splitter
         </div>
-        <div id="subnet1">
-        </div>
-        <div id="subnet2">
-        </div>
+
+        <div id="frame" style="margin-top:30px">
+            <table border="0" width="100%">
+            <tr valign="center">
+                <td rowspan="2" width="66%">
+                    <div id="canvas" class="svg-canvas">
+                    </div>
+                </td>
+                <td align="center">
+                    <div id="subnet1" class="svg-canvas">                        
+                    </div>
+                    <button type="button" class="export-subnet" sub-net-id="1">Export</button>
+                </td>
+            </tr>
+            <tr>
+                <td align="center">
+                    <div id="subnet2" class="svg-canvas">                        
+                    </div>                    
+                    <button type="button" class="export-subnet" sub-net-id="2">Export</button>
+                </td>
+            </tr>
+            </table>
+        </div>     
+
+        <a id="hidden-link" class="hidden"></a>
 
         <script type="text/javascript">
         var app_name = "Net-Splitter";
+        var filename = '';
+        var export_file_url = null;
 
         var highlighted_crease = null;
 
@@ -48,6 +71,10 @@
 
         var raw_svg = $('#raw-svg').get(0);
 
+        $('#title').hide();
+        $('.svg-canvas').hide();
+        $('.export-subnet').hide();
+
         var origami = new Origami.Model();
 
         function init_model()
@@ -60,29 +87,23 @@
 
         // draw the origami as svg
         function draw()
-        {
-            // clear exisiting drawing
-            svg.clear(true);
+        {            
             svg_cfg = origami.drawSVG(svg);
+            $("#canvas").show();
             resize();
         }
 
         function resize()
         {
-            var max_wdith = $(window).width() * 0.9;
-            var max_height = ($(window).height() - 100) * 0.9;
+            if(svg_cfg == null) return;
+
+            var max_wdith = $(window).width() * 0.66;
+            var max_height = ($(window).height() - 30) * 0.9;
             var max_scle = Math.min(max_wdith/svg_cfg.width, max_height/svg_cfg.height);
-            var svg_width = svg_cfg.width*max_scle;  
+            var svg_width = svg_cfg.width*max_scle;
 
-            svg.configure({id: 'raw-svg', width: svg_width}, false);
-
-            var left = ($(window).width() - svg_width)/2;
-
-            console.log('dw = ' + $(window).width() + ' sw = ' + svg_width + ' left = ' + left);
-
-            // center the svg canvas
-            $("#canvas").css({left : left});
-        }   
+            svg.configure({id: 'raw-svg', width: svg_width}, false);            
+        }    
 
         // load the model list
         $.getJSON("models/model-list.json", function(data, textStatus){            
@@ -98,25 +119,45 @@
                         "traj" : model.traj_url,
                         "model-name" : model.name
                     }
-                ).html(model.name).appendTo($("#model-selector"));
+                ).html(model.name).appendTo($("#models"));
             }
 
-            $("button").click(function() {
-                init_model();
+            $("button").click(function() {                                
                 model_url = $(this).attr("model");
+                if(!model_url) return;
+
                 traj_url = $(this).attr("traj");
                 model_name = $(this).attr("model-name");
+
+                init_model();
                 $("#title").html(app_name + " - loading...");
                 origami.load(model_url, null, function(){
                     $("#title").html(app_name + " - " + model_name)
-                    .css("left", ($(document).width()-$("#title").width())/2);                    
+                    .css("left", ($(document).width()-$("#title").width())/2).show();
+                    $('#models').hide();
+
+                    filename = model_name;
                     draw();
                 });
-            });
-
-            // load the first model
-            $("button")[0].click();
+            });           
         });                            
+    
+
+        // export subnets
+        $('.export-subnet').click(function(){
+            var sub_net_id = $(this).attr('sub-net-id');
+            var sub_net = sub_net_id == "1" ? svg1 : svg2;
+            var text = sub_net.toSVG();
+            var data = new Blob([text], {type : 'data:application/octet-stream'});
+            if(export_file_url)
+                window.URL.revokeObjectURL(export_file_url);
+            export_file_url = window.URL.createObjectURL(data);
+            
+            var a = $('#hidden-link').get(0);            
+            a.href = export_file_url;
+            a.download = filename + '_sub_' + sub_net_id + '.svg';
+            a.click();
+        });
 
         $("html").on("dragover", function(event) {
             event.preventDefault();  
@@ -145,6 +186,12 @@
                 var text = reader.result;
                 var obj = $.parseJSON(text);
                 origami.build(obj);
+
+                filename = file.name;
+
+                $("#title").html(app_name + " - " + file.name)
+                .css("left", ($(document).width()-$("#title").width())/2).show();
+                $('#models').hide();
 
                 init_model();
                 draw();
@@ -194,6 +241,11 @@
 
             // split the net
             origami.split(cid, svg1, svg2);
+
+            // show subnet and export button
+            $('.svg-canvas').show();
+            $('.export-subnet').show();
+
         });
 
         $(window).resize(function() {            

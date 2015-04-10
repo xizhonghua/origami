@@ -418,7 +418,25 @@ Origami.Model.prototype.drawSVGImpl = function(svg, fids, cids){
    
     var viewBox = "{0} {1} {2} {3}".format(box.min.x-width*0.1, box.min.z-height*0.1, width*1.2, height*1.2);    
 
-    svg.configure({viewBox: viewBox, width:200}, true);
+    var isSubnet = this.faces.length !== fids.length;
+
+    var max_width = $(window).width() * 0.66;
+    var max_height = $(window).height() * 0.8;
+
+    if(isSubnet) {
+        max_width /= 2;
+        max_height /= 2;
+    }
+
+    var max_scle = Math.min(max_width/width, max_height/height);
+    var svg_width = width*max_scle;
+
+    svg.configure({
+        viewBox: viewBox, 
+        width:svg_width, 
+        'raw-width': width,
+        'raw-height': height
+        }, true);
 
     return svg_cfg;
 }
