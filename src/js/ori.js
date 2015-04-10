@@ -201,6 +201,8 @@ Origami.Model.prototype.buildThreeGeometry = function() {
         this.geometry.faces.push(new THREE.Face3(f.vids[0], f.vids[1], f.vids[2]));
     }
 
+    this.geometry.computeBoundingBox();
+
     this.updateGeometry();
 }
 
@@ -229,12 +231,7 @@ Origami.Model.prototype.foldToPercentage = function(percentage) {
         var ppc = 1.0 / (this.folding_path.length-1);
         var index = Math.floor(percentage / ppc);
         // percentage in between two cfgs
-        var pib = (percentage - index * ppc) / ppc;
-
-        // if(index+1 == this.folding_path.length)
-        // {
-        //     console.log("index")
-        // }
+        var pib = (percentage - index * ppc) / ppc;        
 
         cfg.linearBlend(this.folding_path[index], this.folding_path[index+1], pib);
 
@@ -245,14 +242,18 @@ Origami.Model.prototype.foldToPercentage = function(percentage) {
     this.foldTo(cfg);
 };
 
-Origami.Model.prototype.isCrease = function(vid1, vid2) {
+Origami.Model.prototype.getCrease = function(vid1, vid2) {
     for(var i=0;i<this.creases.length;++i)
     {
         var c = this.creases[i];
         if((c.vid1 == vid1 && c.vid2 == vid2) || (c.vid1 == vid2 && c.vid2 == vid1))
-            return true;
+            return c;
     }
-    return false;
+    return null;
+}
+
+Origami.Model.prototype.isCrease = function(vid1, vid2) {
+    return (this.getCrease(vid1, vid2) != null);
 }
 
 // fold the origami to given configuration
@@ -322,31 +323,55 @@ Origami.Model.prototype.updateGeometry = function() {
 // requires: js/svg/jquery.svg.min.js
 Origami.Model.prototype.drawSVG = function(svg) {
 
-    var back_cfg = this.cur_cfg.clone();
+    var fs = range(this.faces.length);
+    var cs = range(this.creases.length);
+    this.svg_cfg = this.drawSVGImpl(svg, fs, cs);    
+}
 
-    // fold to flat
-    this.foldToPercentage(0.0);
+// compute bounding box based on faces (array of face ids)
+Origami.Model.prototype.computeBoundingBox = function(fids) {
+    var min = THREE.Vector3(1e10, 1e10, 1e10);
+    var max = THREE.Vector3(-1e10, -1e10, -1e10);
 
-    // compute bounding box
-    this.geometry.computeBoundingBox();
+    var vs = [];
 
-    var size = this.geometry.boundingBox.size();
+    for(var i=0;i<fids.length;++i)
+    {
+        for(var j=0;j<3;++j)
+        {
+            var v = this.flat_vertices[this.faces[fids[i]].vids[j]];
+            vs.push(v);
+        }
+    }
+
+    var box = new THREE.Box3(min, max);
+
+    box.setFromPoints(vs);
+
+    return box;
+}
+
+// draw svg for given faces and creases indexing original net
+Origami.Model.prototype.drawSVGImpl = function(svg, fids, cids){
+    
+    // compute bounding box from faces
+    var box = this.computeBoundingBox(fids);
+
+    var size = box.size();
     var width = size.x;
     var height = size.z;
     var strokeWidth = Math.max(width, height)*0.0015;
-
-    console.log(size);
 
     // create a new path
     var path = svg.createPath();
 
     // boundary
-    for(var i=0;i<this.faces.length;++i)
+    for(var i=0;i<fids.length;++i)
     {
         for(var j=1;j<=3;++j)
         {
-            var vid1 = this.faces[i].vids[j-1];
-            var vid2 = this.faces[i].vids[j%3];
+            var vid1 = this.faces[fids[i]].vids[j-1];
+            var vid2 = this.faces[fids[i]].vids[j%3];
             var v1 = this.flat_vertices[vid1];
             var v2 = this.flat_vertices[vid2];
 
@@ -361,9 +386,9 @@ Origami.Model.prototype.drawSVG = function(svg) {
     path = svg.createPath();
 
     // crease lines
-    for(var i=0;i<this.creases.length;++i)
+    for(var i=0;i<cids.length;++i)
     {
-        var c = this.creases[i];
+        var c = this.creases[cids[i]];
         var v1 = this.flat_vertices[c.vid1];
         var v2 = this.flat_vertices[c.vid2];
         path.move(v1.x, v1.z).line(v2.x, v2.z);
@@ -378,38 +403,40 @@ Origami.Model.prototype.drawSVG = function(svg) {
         strokeWidth: strokeWidth
     });    
     
-    // fold back
-    this.foldTo(back_cfg);    
-
-
-    this.svg_cfg = {
+    var svg_cfg = {
         width : width,
         height : height,
         strokeWidth : strokeWidth,
         strokeDashArray : strokeDashArray
     };
+
+    return svg_cfg;
 }
 
 /// create a highlighted crease in svg
 /// return the new node
-Origami.Model.prototype.highLightCrease = function(svg, cid) {
+Origami.Model.prototype.highLightCrease = function(svg, cid, selected) {
 
     var c = this.creases[cid];
     var v1 = this.flat_vertices[c.vid1];    
     var v2 = this.flat_vertices[c.vid2];
     
-    var node = svg.line(v1.x, v1.z, v2.x, v2.z, {
-        stroke: '#ff0000', 
-        'stroke-dasharray' : this.svg_cfg.strokeDashArray,
+    var node_cfg = {
+        stroke: selected ? '#0000ff' : '#ff0000',
         strokeWidth: this.svg_cfg.strokeWidth*2
-    });
+    };
+
+    if(!selected)
+        node_cfg['stroke-dasharray'] = this.svg_cfg.strokeDashArray;
+
+    var node = svg.line(v1.x, v1.z, v2.x, v2.z, node_cfg);
 
     return node;
 }
 
 // get a crease line that close p {x, y}
 // requires geometry.js
-Origami.Model.prototype.getCrease = function(p) {
+Origami.Model.prototype.getClosestCrease = function(p) {
 
     var min_dist = 1e10;
     var threshold = 0.01 * Math.max(this.svg_cfg.width, this.svg_cfg.height);
@@ -440,6 +467,35 @@ Origami.Model.prototype.getCrease = function(p) {
 }
 
 /// split the model into two by cutting along the given crease line
-Origami.Model.prototype.split = function(creaseId) {
-    //TODO
+Origami.Model.prototype.split = function(cid) {
+
+    // the splitting crease
+    var crease = this.creases[cid];
+
+    var fids1 = [];
+    var fids2 = [];
+    var cids = [];
+
+    var q = [crease.fid];
+    var visited = [];
+    visited[crease.fid] = true;
+
+    while(q.length) {
+        var head_fid = q.shift();
+        fids1.push(head_fid);        
+        for(var i=1;i<=3;++i)
+        {
+            var vid1 = this.faces[head_fid].vids[i-1];
+            var vid2 = this.faces[head_fid].vids[i%3];
+            var c = this.getCrease(vid1, vid2);
+            if(!c) continue;
+            if(visited[c.fid]) continue;
+
+            // put that crease's face into queue
+            q.push(c.fid);
+            visited[c.fid] = true;
+        }
+    }
+
+    console.log(fids1);
 }

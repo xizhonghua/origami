@@ -26,8 +26,11 @@
 
         <script type="text/javascript">
         var app_name = "Net-Splitter";
+
         var highlighted_crease = null;
 
+        var selected_cid = -1;
+        var selected_crease = null;
 
         $("#canvas").svg();
 
@@ -39,6 +42,13 @@
 
         var origami = new Origami.Model();
 
+        function init_model()
+        {
+            // will be removed automatically, set it to null
+            highlighted_crease = null;
+            selected_crease = null;
+            selected_cid = -1;
+        }
 
         // draw the origami as svg
         function draw()
@@ -46,6 +56,11 @@
             // clear exisiting drawing
             svg.clear(true);
             origami.drawSVG(svg);
+            resize();
+        }
+
+        function resize()
+        {
             var bbox = origami.geometry.boundingBox;
             var width = bbox.max.x - bbox.min.x;
             var height = bbox.max.z - bbox.min.z;
@@ -63,7 +78,7 @@
 
             // center the svg canvas
             $("#canvas").css({left : left});
-        }         
+        }   
 
         // load the model list
         $.getJSON("models/model-list.json", function(data, textStatus){            
@@ -83,17 +98,14 @@
             }
 
             $("button").click(function() {
+                init_model();
                 model_url = $(this).attr("model");
                 traj_url = $(this).attr("traj");
                 model_name = $(this).attr("model-name");
                 $("#title").html(app_name + " - loading...");
                 origami.load(model_url, null, function(){
                     $("#title").html(app_name + " - " + model_name)
-                    .css("left", ($(document).width()-$("#title").width())/2);
-
-                    // will be removed automatically, set it to null
-                    highlighted_crease = null;
-
+                    .css("left", ($(document).width()-$("#title").width())/2);                    
                     draw();
                 });
             });
@@ -129,6 +141,8 @@
                 var text = reader.result;
                 var obj = $.parseJSON(text);
                 origami.build(obj);
+
+                init_model();
                 draw();
             }
 
@@ -143,15 +157,43 @@
             var pt = raw_svg.createSVGPoint();
             pt.x = event.clientX; pt.y = event.clientY;
             var gt = pt.matrixTransform(raw_svg.getScreenCTM().inverse());
-            console.log(gt);
+
             if(highlighted_crease)
             {         
                 svg.remove(highlighted_crease);
                 highlighted_crease = null;
             }
-            var cid = origami.getCrease(gt);
+            var cid = origami.getClosestCrease(gt);
             if(cid==-1) return;
             highlighted_crease = origami.highLightCrease(svg, cid);
+        });
+
+        $('#raw-svg').click(function(event) {
+            if(!origami) return;
+
+            // Create an SVGPoint for future math
+            var pt = raw_svg.createSVGPoint();
+            pt.x = event.clientX; pt.y = event.clientY;
+            var gt = pt.matrixTransform(raw_svg.getScreenCTM().inverse());
+            
+            var cid = origami.getClosestCrease(gt);
+            if(cid==-1) return;
+
+            if(selected_crease)
+            {         
+                svg.remove(selected_crease);
+                selected_crease = null;
+            }
+            
+            selected_cid = cid;
+            selected_crease = origami.highLightCrease(svg, selected_cid, true);
+
+            // split the net
+            origami.split(cid);
+        });
+
+        $(window).resize(function() {            
+            resize();
         });
         </script>    
     </body>
