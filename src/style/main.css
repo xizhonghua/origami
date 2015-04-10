@@ -45,6 +45,8 @@ table {
 
 .svg-canvas {
     border:1px solid #333;
+    background-color:#f0f0f0;
+    margin:4px;
 }
 
 .hidden {

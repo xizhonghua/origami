@@ -16,16 +16,19 @@
 
     </head>
     <body>        
-        <div id="models" class="center w400 h200 absolute-center">            
+        <div id="hint" class="center w400 h200 absolute-center">            
             <h1 class="margin4">Drop Net Here</h1> 
-            <h3>Or Start With Following Nets</h3>           
+            <h3>Or Start With Following Nets</h3>
+            <div id="models">                    
+            </div>
         </div>
+
         <div id="title">
             Net-Splitter
         </div>
 
         <div id="frame" style="margin-top:30px">
-            <table border="0" width="100%">
+            <table border="0" width="98%">
             <tr valign="center">
                 <td rowspan="2" width="66%">
                     <div id="canvas" class="svg-canvas">
@@ -48,6 +51,9 @@
         </div>     
 
         <a id="hidden-link" class="hidden"></a>
+
+        <div id="copyright" source="copyright.html">
+        </div>
 
         <script type="text/javascript">
         var app_name = "Net-Splitter";
@@ -103,7 +109,11 @@
             var svg_width = svg_cfg.width*max_scle;
 
             svg.configure({id: 'raw-svg', width: svg_width}, false);            
-        }    
+        }
+
+        $('div[source]').each(function(index){
+            $(this).load($(this).attr('source'));
+        });
 
         // load the model list
         $.getJSON("models/model-list.json", function(data, textStatus){            
@@ -134,7 +144,7 @@
                 origami.load(model_url, null, function(){
                     $("#title").html(app_name + " - " + model_name)
                     .css("left", ($(document).width()-$("#title").width())/2).show();
-                    $('#models').hide();
+                    $('#hint').hide();
 
                     filename = model_name;
                     draw();
