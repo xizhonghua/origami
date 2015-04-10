@@ -12,6 +12,8 @@
 ### Live Deom
 * [Origami Folder](http://masc.cs.gmu.edu/origami/folder.html)
 
+---
+
 ### Net Splitter
 * Split the net into subnets.
 
@@ -24,6 +26,7 @@
 ### Live Deom
 * [Net Splitter](http://masc.cs.gmu.edu/origami/net.html)
 
+---
 
 ### Project Website
 * Unfolding Polyhedra [http://masc.cs.gmu.edu/wiki/UnfoldingPolyhedra](http://masc.cs.gmu.edu/wiki/UnfoldingPolyhedra)
