@@ -27,27 +27,22 @@
             Net-Splitter
         </div>
 
-        <div id="frame" style="margin-top:30px">
-            <table border="0" width="98%">
-            <tr valign="center">
-                <td rowspan="2" width="66%">
-                    <div id="canvas" class="svg-canvas">
-                    </div>
-                </td>
-                <td align="center">
-                    <div id="subnet1" class="svg-canvas">                        
-                    </div>
-                    <button type="button" class="export-subnet" sub-net-id="1">Export</button>
-                </td>
-            </tr>
-            <tr>
-                <td align="center">
-                    <div id="subnet2" class="svg-canvas">                        
-                    </div>                    
-                    <button type="button" class="export-subnet" sub-net-id="2">Export</button>
-                </td>
-            </tr>
-            </table>
+        <div id="frame" style="margin-top:30px;">
+            <div id="canvas" class="center svg-canvas">
+            </div>
+
+            <div class="center">
+            <button type="button" class="export-subnet" sub-net-id="1">Export Sub Net 1</button>
+            <button type="button" class="export-subnet" sub-net-id="2">Export Sub Net 2</button>
+            </div>
+
+            <div id="subnet1" class="svg-canvas">                        
+            </div>
+            
+    
+            <div id="subnet2" class="svg-canvas">                        
+            </div>                    
+                                
         </div>     
 
         <a id="hidden-link" class="hidden"></a>
@@ -95,21 +90,9 @@
         function draw()
         {            
             svg_cfg = origami.drawSVG(svg);
-            $("#canvas").show();
-            resize();
-        }
-
-        function resize()
-        {
-            if(svg_cfg == null) return;
-
-            var max_wdith = $(window).width() * 0.66;
-            var max_height = ($(window).height() - 30) * 0.9;
-            var max_scle = Math.min(max_wdith/svg_cfg.width, max_height/svg_cfg.height);
-            var svg_width = svg_cfg.width*max_scle;
-
-            svg.configure({id: 'raw-svg', width: svg_width}, false);            
-        }
+            $("#canvas").show();        
+            svg.configure({id: 'raw-svg'}, false);
+        }        
 
         $('div[source]').each(function(index){
             $(this).load($(this).attr('source'));
@@ -223,9 +206,11 @@
             {         
                 svg.remove(highlighted_crease);
                 highlighted_crease = null;
-            }
+            }            
+
             var cid = origami.getClosestCrease(gt);
-            if(cid==-1) return;
+            if(cid==-1) return;            
+
             highlighted_crease = origami.highLightCrease(svg, cid);
         });
 
@@ -252,15 +237,10 @@
             // split the net
             origami.split(cid, svg1, svg2);
 
-            // show subnet and export button
-            $('.svg-canvas').show();
-            $('.export-subnet').show();
+            // show the export buttons
+            $('.export-subnet').hide().fadeIn();
 
-        });
-
-        $(window).resize(function() {            
-            resize();
-        });
+        });        
         </script>    
     </body>
 </html>

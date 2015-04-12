@@ -366,7 +366,25 @@ Origami.Model.prototype.drawSVGImpl = function(svg, fids, cids){
     var size = box.size();
     var width = size.x;
     var height = size.z;
-    var strokeWidth = Math.max(width, height)*0.0015;
+
+    var isSubnet = this.faces.length !== fids.length;
+
+    var max_width = $(window).width() * 0.98;
+    var max_height = $(window).height() * 0.98 - 80;    
+
+    var max_scale = Math.min(max_width/width, max_height/height);
+
+    // sub nets should have the same scale factor
+    if(isSubnet) {
+        var max_dim = Math.max(this.svg_cfg.raw_width, this.svg_cfg.raw_height);
+        // long edge size = 720 px (10 in @ 72dpi)
+        max_scale = 720 / max_dim;
+    }
+
+    var svg_width = width*max_scale;
+    var svg_height = height*max_scale;
+    
+    var strokeWidth = Math.max(svg_width, svg_height)*0.0015;
 
     // create a new path
     var path = svg.createPath();
@@ -383,6 +401,9 @@ Origami.Model.prototype.drawSVGImpl = function(svg, fids, cids){
 
             if(this.isCrease(cids, vid1, vid2)) continue;
 
+            v1 = v1.clone().sub(box.min).multiplyScalar(max_scale);
+            v2 = v2.clone().sub(box.min).multiplyScalar(max_scale);
+
             path.move(v1.x, v1.z).line(v2.x, v2.z);
         }
     }
@@ -397,6 +418,10 @@ Origami.Model.prototype.drawSVGImpl = function(svg, fids, cids){
         var c = this.creases[cids[i]];
         var v1 = this.flat_vertices[c.vid1];
         var v2 = this.flat_vertices[c.vid2];
+
+        v1 = v1.clone().sub(box.min).multiplyScalar(max_scale);
+        v2 = v2.clone().sub(box.min).multiplyScalar(max_scale);
+
         path.move(v1.x, v1.z).line(v2.x, v2.z);
     }
 
@@ -410,30 +435,20 @@ Origami.Model.prototype.drawSVGImpl = function(svg, fids, cids){
     });    
     
     var svg_cfg = {
-        width : width,
-        height : height,
+        shift : box.min,
+        scale : max_scale,
+        width : svg_width,
+        height : svg_width,
+        raw_width : width,
+        raw_height : height,
         strokeWidth : strokeWidth,
         strokeDashArray : strokeDashArray
     };
-   
-    var viewBox = "{0} {1} {2} {3}".format(box.min.x-width*0.1, box.min.z-height*0.1, width*1.2, height*1.2);    
-
-    var isSubnet = this.faces.length !== fids.length;
-
-    var max_width = $(window).width() * 0.66;
-    var max_height = $(window).height() * 0.8;
-
-    if(isSubnet) {
-        max_width /= 2;
-        max_height /= 2;
-    }
-
-    var max_scle = Math.min(max_width/width, max_height/height);
-    var svg_width = width*max_scle;
 
     svg.configure({
-        viewBox: viewBox, 
-        width:svg_width, 
+        //viewBox: viewBox, 
+        width:svg_width,
+        height:svg_height,
         'raw-width': width,
         'raw-height': height
         }, true);
@@ -448,6 +463,9 @@ Origami.Model.prototype.highLightCrease = function(svg, cid, selected) {
     var c = this.creases[cid];
     var v1 = this.flat_vertices[c.vid1];    
     var v2 = this.flat_vertices[c.vid2];
+
+    v1 = v1.clone().sub(svg_cfg.shift).multiplyScalar(svg_cfg.scale);
+    v2 = v2.clone().sub(svg_cfg.shift).multiplyScalar(svg_cfg.scale);
     
     var node_cfg = {
         stroke: selected ? '#0000ff' : '#ff0000',
@@ -475,6 +493,9 @@ Origami.Model.prototype.getClosestCrease = function(p) {
         var c = this.creases[i];
         var v1 = this.flat_vertices[c.vid1];
         var v2 = this.flat_vertices[c.vid2];
+
+        v1 = v1.clone().sub(svg_cfg.shift).multiplyScalar(svg_cfg.scale);
+        v2 = v2.clone().sub(svg_cfg.shift).multiplyScalar(svg_cfg.scale);
         
         var v = { x: v1.x, y : v1.z };
         var w = { x: v2.x, y : v2.z };
