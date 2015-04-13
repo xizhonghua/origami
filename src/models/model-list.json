@@ -6,6 +6,11 @@
             "traj_url":"models/bunny-128_94716_1427762975.trj.json"
         },
         {
+            "name":"Bunny-body",
+            "model_url":"models/bunny-128_patch_0_16662.ori.json", 
+            "traj_url":"models/bunny-128_patch_0_16662_1427420191.trj.json"
+        },
+        {
             "name":"MoneyBox",
             "model_url":"models/moneybox-128.ori.json", 
             "traj_url":"models/moneybox-128.trj1.json"
