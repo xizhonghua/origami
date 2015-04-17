@@ -11,6 +11,7 @@
         <script src="js/svg/jquery.svg.min.js"></script>
         <script src='js/extension.js'></script>
         <script src="js/geometry.js"></script>
+        <script src="js/io.js"></script>
         <script src='js/ori.js'></script>
         <script src='js/net-spliiter.js'></script>
 
@@ -172,25 +173,29 @@
 
             // only read the first file
             var file = files[0];
-            if(file.name.indexOf('.json')==-1) return;
-            var reader = new FileReader();
+            var loader = null;
 
-            reader.onload = function(e) {
-                var text = reader.result;
-                var obj = $.parseJSON(text);
-                origami.build(obj);
+            if(file.name.endsWith('.json'))
+                loader = new Origami.JSONLoader();
+            else if(file.name.endsWith('.ori'))
+                loader = new Origami.ORILoader();
+            else
+                return;
+
+            loader.load(file, function(obj) {                
 
                 filename = file.name;
 
+                origami.build(obj);
+
                 $("#title").html(app_name + " - " + file.name)
                 .css("left", ($(document).width()-$("#title").width())/2).show();
-                $('#models').hide();
+                $('#hint').hide();
 
                 init_model();
                 draw();
-            }
-
-            reader.readAsText(file, 'UTF-8');
+            });
+        
         });
 
         // mouse move event handler

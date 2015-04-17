@@ -81,6 +81,68 @@ Origami.Model = function() {
     this.svg_cfg = {};
 }
 
+Origami.JSONLoader = function() {}
+
+Origami.JSONLoader.prototype.load = function(file, callback) {
+    var reader = new FileReader();
+
+    reader.onload = function(e) {
+        var text = reader.result;
+        var obj = $.parseJSON(text);
+        
+        if(callback) callback(obj);
+    }
+
+    reader.readAsText(file, 'UTF-8');
+}
+
+
+Origami.ORILoader = function() {}
+
+// requires io.js
+Origami.ORILoader.prototype.load = function(file, callback) {
+    var reader = new FileReader();
+
+    reader.onload = function(e) {
+        var text = reader.result;
+
+        var lines = text.split('\n');
+
+        var sr = new Origami.StreamReader(lines);
+
+        var obj = {
+            vertices : [],
+            creases : [],
+            faces : [],
+            base_face_id : -1,
+            ordered_face_ids : []
+        }
+
+        var vsize = sr.readlineInt();        
+
+        for(var i=0;i<vsize;++i)            
+            obj.vertices.push(sr.readlineFloatArray());        
+
+        var csize = sr.readlineInt();
+
+        for(var i=0;i<csize;++i)
+            obj.creases.push(sr.readlineFloatArray());
+
+        var fsize = sr.readlineInt();
+        for(var i=0;i<fsize;++i)
+            obj.faces.push(sr.readlineIntArray());
+
+        obj.base_face_id = sr.readlineInt();
+
+        obj.ordered_face_ids = sr.readlineIntArray();
+        
+        if(callback) callback(obj);
+    }
+
+    reader.readAsText(file, 'UTF-8');
+}
+
+
 Origami.Model.prototype.load = function(model_url, traj_url, callback) {
     var me = this;
 
@@ -91,13 +153,7 @@ Origami.Model.prototype.load = function(model_url, traj_url, callback) {
         if(callback) callback(me);
     }
 
-    $.getJSON(model_url, function(model, textStatus) {
-
-        console.log("model = " + model_url + " loaded!");
-        
-        // build the model
-        me.build(model);
-
+    var load_traj = function() {
         // check trajectory file
         if(traj_url==null || traj_url.length == 0) {
             my_callback(me);
@@ -111,7 +167,20 @@ Origami.Model.prototype.load = function(model_url, traj_url, callback) {
                 my_callback(me);
             });
         }
-    });
+    }
+
+    if(model_url.endsWith('.json')) {
+        // json version
+        $.getJSON(model_url, function(model, textStatus) {
+
+            console.log("model = " + model_url + " loaded!");
+        
+            // build the model
+            me.build(model);
+
+            load_traj();        
+        });
+    }
 }
 
 // build the origami model from data in string

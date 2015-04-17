@@ -23,7 +23,7 @@ function init()
     renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
-    renderer.setClearColor( 0xaaaaaa, 1.0 );
+    renderer.setClearColor( 0xffffff, 1.0 );
 
     document.body.appendChild( renderer.domElement );
 
@@ -196,6 +196,18 @@ $(document).keypress(function(event) {
             materials[0].opacity = materials[0].opacity == 1.0 ? 0.5 : 1.0;            
             materials[0].transparent = materials[0].opacity == 1.0 ? false : true;
             break;
+        // 'x'
+        case 120:
+            camera.rotation.x += 0.05;
+            break;
+        // 'y'
+        case 121:
+            camera.rotation.y += 0.05;
+            break;
+        // 'z'
+        case 122:
+            camera.rotation.z += 0.05;
+            break;        
         default:
             break;
     }    
