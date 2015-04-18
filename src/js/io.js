@@ -35,15 +35,15 @@ Origami.StreamReader.prototype.readlineInt = function() {
     return this.readlineItem(parseInt);
 };
 
-Origami.StreamReader.prototype.readlineFloat = function() {
+Origami.StreamReader.prototype.readlineFloat = function(d) {
     return this.readlineItem(parseFloat)
 };
 
-Origami.StreamReader.prototype.readlineIntArray = function() {
+Origami.StreamReader.prototype.readlineIntArray = function(d) {
     return this.readlineArray(parseInt);
 };
 
-Origami.StreamReader.prototype.readlineFloatArray = function() {
+Origami.StreamReader.prototype.readlineFloatArray = function(d) {
     return this.readlineArray(parseFloat);
 };
 

@@ -584,6 +584,135 @@ Origami.Model.prototype.getClosestCrease = function(p) {
     return cid;
 }
 
+/// create a sub model/net/ori from the given face ids and crease ids
+Origami.Model.prototype.createSubModel = function(fids, cids) {
+    // create an object
+    var obj = {
+        vertices: [],
+        creases: [],
+        faces: [],
+        base_face_id: -1,
+        ordered_face_ids: []
+    };
+
+    var vid = 0;
+    var cid = 0;
+    var fid = 0;
+    var vid_mapping1 = {};  // old vid to new vid
+    var vid_mapping2 = {};  // new vid to old vid
+    var cid_mapping = {};  // old cid to new cid    
+    var fid_mapping = {};  // old fid to new fid
+
+    ////////////////////////////////////////////////////////
+    // creating mapping
+    ////////////////////////////////////////////////////////
+
+    for(var i=0;i<fids.length;++i)
+    {
+        for(var j=0;j<3;++j)
+        {
+            var old_vid = this.faces[fids[i]].vids[j];
+            if (old_vid in vid_mapping1) continue;
+            vid_mapping1[old_vid] = vid;
+            vid_mapping2[vid] = old_vid;
+            ++vid;
+        }
+    }
+
+    for(var i=0;i<cids.length;++i)    
+        cid_mapping[cids[i]] = cid++;
+
+    for(var i=0;i<fids.length;++i)
+        fid_mapping[fids[i]] = fid++;
+
+    ////////////////////////////////////////////////////////
+
+    // identify base face / ordered face ids
+    if(this.base_face_id in fid_mapping)
+    {
+        // base face is in this side, keep using it
+        obj.base_face_id = this.base_face_id;        
+    }
+    else
+    {
+        // find the first one in order
+        for(var i=0;i<this.ordered_face_ids.length;++i)
+        {
+            var ordered_fid = this.ordered_face_ids[i];
+            if(fids.indexOf(ordered_fid)>=0)
+            {
+                obj.base_face_id = fid_mapping[ordered_fid];
+            }
+        }
+    }
+
+    for(var i=0;i<this.ordered_face_ids.length;++i)
+    {
+        var ordered_fid = this.ordered_face_ids[i];
+        if(fids.indexOf(ordered_fid)>=0)
+            obj.ordered_face_ids.push(fid_mapping[ordered_fid]);
+    }
+
+    // build vertices
+    for(var i=0;i<vid;++i)
+    {
+        var old_v = this.flat_vertices[vid_mapping2[i]];
+        var coord = [old_v.x, old_v.y, old_v.z];
+        obj.vertices.push(coord);
+    }
+
+    // build faces
+    for(var i=0;i<fids.length;++i)
+    {
+        var old_f = this.faces[fids[i]];
+
+        var new_pid = (old_f.pid in fid_mapping) ? fid_mapping[old_f.pid] : -1;
+        var new_cid = (old_f.cid in cid_mapping) ? cid_mapping[old_f.cid] : -1;
+
+        var new_f = [
+            3,                              // # of vertices
+            vid_mapping1[old_f.vids[0]],    //vid1
+            vid_mapping1[old_f.vids[1]],    //vid2
+            vid_mapping1[old_f.vids[2]],    //vid3
+            new_pid,
+            new_cid
+        ];
+
+        obj.faces.push(new_f);
+    }
+
+    // build creases
+    for(var i=0;i<cids.length;++i)
+    {
+        var old_c = this.creases[cids[i]];
+
+        var new_fid = (old_c.fid in fid_mapping) ? fid_mapping[old_c.fid] : -1;
+        var new_pid = (old_c.pid in fid_mapping) ? fid_mapping[old_c.pid] : -1;    
+
+        var new_c = [
+            vid_mapping1[old_c.vid1],   // vid1
+            vid_mapping1[old_c.vid2],   // vid2
+            old_c.folding_angle,        // folding_angle
+            new_fid,                    // fid
+            new_pid                     // pid
+        ];
+
+        obj.creases.push(new_c);
+    }
+
+    console.log(obj);
+
+
+    // create a new model
+    var model = new Origami.Model();
+
+    // build the model
+    model.build(obj);
+
+    // retun the model
+    return model;
+};
+
 /// split the model into two by cutting along the given crease line
 Origami.Model.prototype.split = function(cid, svg1, svg2) {
 
@@ -629,6 +758,9 @@ Origami.Model.prototype.split = function(cid, svg1, svg2) {
 
     this.drawSVGImpl(svg1, fids1, cids1);
     this.drawSVGImpl(svg2, fids2, cids2);
+
+    this.createSubModel(fids1, cids1);
+    this.createSubModel(fids2, cids2);
 
 
     // console.log(fids1);
