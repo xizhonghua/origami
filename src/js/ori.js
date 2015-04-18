@@ -790,8 +790,6 @@ Origami.Model.prototype.split = function(cid, svg1, svg2) {
     var visited = [];
     visited[crease.fid] = true;
 
-    var all_cids = range(this.creases.length);
-
     while(q.length) {
         var head_fid = q.shift();
         fids1.push(head_fid);        
@@ -799,7 +797,7 @@ Origami.Model.prototype.split = function(cid, svg1, svg2) {
         {
             var vid1 = this.faces[head_fid].vids[i-1];
             var vid2 = this.faces[head_fid].vids[i%3];
-            var c = this.getCrease(all_cids, vid1, vid2);
+            var c = this.getCrease(vid1, vid2);
             if(!c) continue;
             if(visited[c.fid]) continue;
 
@@ -818,19 +816,8 @@ Origami.Model.prototype.split = function(cid, svg1, svg2) {
     for(var i=0;i<this.creases.length;++i)    
         if(cids1.indexOf(i)==-1 && i!=cid) cids2.push(i);
 
-    this.drawSVGImpl(svg1, fids1, cids1);
-    this.drawSVGImpl(svg2, fids2, cids2);
+    var sub1 = this.createSubModel(fids1, cids1);
+    var sub2 = this.createSubModel(fids2, cids2);
 
-    this.createSubModel(fids1, cids1);
-    this.createSubModel(fids2, cids2);
-
-
-    // console.log(fids1);
-    // console.log(cids1);
-
-    // console.log(fids2);
-    // console.log(cids2);
-
-
-
+    return [sub1, sub2];
 }

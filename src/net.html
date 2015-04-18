@@ -37,12 +37,8 @@
             <button type="button" class="export-subnet" sub-net-id="2">Export Sub Net 2</button>
             </div>
 
-            <div id="subnet1" class="svg-canvas">                        
-            </div>
-            
-    
-            <div id="subnet2" class="svg-canvas">                        
-            </div>                    
+            <div id="temp-canvas" class="svg-canvas">                        
+            </div>        
                                 
         </div>     
 
@@ -58,8 +54,7 @@
 
         var highlighted_crease = null;
 
-        var selected_cid = -1;
-        var selected_crease = null;
+        var selected_cid = -1;        
 
         // origamis on the canvas
         var origamis = [];
@@ -75,13 +70,14 @@
         var canvas_stroke_width = 1.0;
 
 
-
         $("#canvas").svg();        
-        $("#subnet1").svg();
-        $("#subnet2").svg();
+        $("#temp-canvas").svg();
+        
         var svg = $('#canvas').svg('get');
-        var svg1 = $('#subnet1').svg('get');
-        var svg2 = $('#subnet2').svg('get');
+
+        // temp canvas for export svg files
+        var svg_temp = $('#temp-canvas').svg('get');
+        
         var svg_cfg = null;
 
         svg.configure({id: 'raw-svg'}); 
@@ -101,8 +97,7 @@
 
         function init_canvas() {
             // will be removed automatically, set it to null
-            highlighted_crease = null;
-            selected_crease = null;
+            highlighted_crease = null;            
             selected_cid = -1;
 
             // determine the scale of the model based on the canvas size
@@ -142,6 +137,8 @@
         function draw() {
 
             svg.clear();
+
+            highlighted_crease = null;
 
             $.each(origamis, function(index, origami){
                 svg_cfg = origami.drawSVG(svg, canvas_translation, canvas_scale, canvas_stroke_width);
@@ -336,18 +333,18 @@
 
             var cid = result.cid;
             var selected_origami = result.origami;            
-
-            if(selected_crease)
-            {         
-                svg.remove(selected_crease);
-                selected_crease = null;
-            }
-            
+           
             selected_cid = cid;
-            selected_crease = selected_origami.highLightCrease(svg, selected_cid, true);
 
             // split the net
-            selected_origami.split(cid, svg1, svg2);
+            var subs = selected_origami.split(cid, svg1, svg2);
+
+            origamis.splice(origamis.indexOf(selected_origami), 1);
+            origamis.push.apply(origamis, subs);
+
+            spliited_origamis.push(selected_origami);
+
+            draw();
 
             // show the export buttons
             $('.export-subnet').hide().fadeIn();
