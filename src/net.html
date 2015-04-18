@@ -61,6 +61,21 @@
         var selected_cid = -1;
         var selected_crease = null;
 
+        // origamis on the canvas
+        var origamis = [];
+
+        // splitted ones, used for undo
+        var spliited_origamis = [];
+
+        // scale for visualiztion        
+        var canvas_scale = 1.0;
+        // translate 
+        var canvas_translation = null;
+        // stroke_width
+        var canvas_stroke_width = 1.0;
+
+
+
         $("#canvas").svg();        
         $("#subnet1").svg();
         $("#subnet2").svg();
@@ -77,27 +92,88 @@
         $('.svg-canvas').hide();
         $('.export-subnet').hide();
 
-        var origami = new Origami.Model();
+        function clear_canvas() {
+            origamis = [];
+            spliited_origamis = [];
 
-        function init_model()
-        {
+            //TODO clear svg
+        }
+
+        function init_canvas() {
             // will be removed automatically, set it to null
             highlighted_crease = null;
             selected_crease = null;
             selected_cid = -1;
+
+            // determine the scale of the model based on the canvas size
+            var full_net = origamis[0];
+            var box = full_net.geometry.boundingBox;
+            
+            var size = box.size();
+            var width = size.x;
+            var height = size.z;            
+
+            var max_width = $(window).width() * 0.98;
+            var max_height = $(window).height() * 0.98 - 80;
+            
+
+            // scale
+            canvas_scale = Math.min(max_width/width, max_height/height);
+
+            var svg_width = width*canvas_scale;
+            var svg_height = height*canvas_scale;
+
+            canvas_translation = box.min;
+            canvas_stroke_width = Math.max(svg_width, svg_height)*0.0015;
+
+            svg.configure({
+                id: 'raw-svg',
+                width:svg_width,
+                height:svg_height
+                }, true);
+            }
+
+        // undo the last split operation
+        function undo() {
+            //TODO
         }
 
         // draw the origami as svg
-        function draw()
-        {            
-            svg_cfg = origami.drawSVG(svg);
+        function draw() {
+
+            svg.clear();
+
+            $.each(origamis, function(index, origami){
+                svg_cfg = origami.drawSVG(svg, canvas_translation, canvas_scale, canvas_stroke_width);
+            });
+            
             $("#canvas").show();        
             svg.configure({id: 'raw-svg'}, false);
-        }        
+        }
 
+        function model_loaded_handler(model_name) {
+            // disply and center the titile
+            $("#title").html(app_name + " - " + model_name)
+            .css("left", ($(document).width()-$("#title").width())/2).show();
+
+            // hide the hint
+            $('#hint').hide();
+
+            // output filename
+            filename = model_name;
+
+            // init canvas
+            init_canvas();
+
+            // render
+            draw();
+        } 
+
+        // load content: copyright
         $('div[source]').each(function(index){
             $(this).load($(this).attr('source'));
         });
+
 
         // load the model list
         $.getJSON("models/model-list.json", function(data, textStatus){            
@@ -123,15 +199,16 @@
                 traj_url = $(this).attr("traj");
                 model_name = $(this).attr("model-name");
 
-                init_model();
+                clear_canvas();
+                
                 $("#title").html(app_name + " - loading...");
-                origami.load(model_url, null, function(){
-                    $("#title").html(app_name + " - " + model_name)
-                    .css("left", ($(document).width()-$("#title").width())/2).show();
-                    $('#hint').hide();
 
-                    filename = model_name;
-                    draw();
+                var origami = new Origami.Model();
+
+                origamis.push(origami);
+
+                origami.load(model_url, null, function(){
+                    model_loaded_handler(model_name);
                 });
             });           
         });                            
@@ -182,25 +259,47 @@
             else
                 return;
 
-            loader.load(file, function(obj) {                
+            clear_canvas();
 
-                filename = file.name;
+            var origami = new Origami.Model();
+            
+            origamis.push(origami);
+
+            loader.load(file, function(obj) {                
 
                 origami.build(obj);
 
-                $("#title").html(app_name + " - " + file.name)
-                .css("left", ($(document).width()-$("#title").width())/2).show();
-                $('#hint').hide();
-
-                init_model();
-                draw();
+                model_loaded_handler(file.name);
             });
         
         });
 
+        // find the closest crease based on the point among all origmais
+        function findClosestCrease(pt) {
+            var cid = -1;
+            var selected_origami = null;
+
+            for(var i=0;i<origamis.length;++i)
+            {
+                var origami = origamis[i];
+                cid = origami.getClosestCrease(pt);
+                if(cid>=0) {
+                    selected_origami = origami;
+                    break;
+                }
+            }
+
+            if(cid == -1) return null;
+
+            return {
+                cid : cid,
+                origami : selected_origami
+            };
+        }
+
         // mouse move event handler
         $('#canvas').mousemove(function(event) {            
-            if(!origami) return;
+            if(origamis.length == 0) return;
 
             // Create an SVGPoint for future math
             var pt = raw_svg.createSVGPoint();
@@ -213,22 +312,30 @@
                 highlighted_crease = null;
             }            
 
-            var cid = origami.getClosestCrease(gt);
-            if(cid==-1) return;            
+            var result = findClosestCrease(gt);
 
-            highlighted_crease = origami.highLightCrease(svg, cid);
+            if(!result) return;
+
+            var cid = result.cid;
+            var selected_origami = result.origami;            
+
+            highlighted_crease = selected_origami.highLightCrease(svg, cid);
         });
 
         $('#canvas').click(function(event) {
-            if(!origami) return;
+            if(origamis.length == 0) return;
 
             // Create an SVGPoint for future math
             var pt = raw_svg.createSVGPoint();
             pt.x = event.clientX; pt.y = event.clientY;
             var gt = pt.matrixTransform(raw_svg.getScreenCTM().inverse());
             
-            var cid = origami.getClosestCrease(gt);
-            if(cid==-1) return;
+            var result = findClosestCrease(gt);
+
+            if(!result) return;
+
+            var cid = result.cid;
+            var selected_origami = result.origami;            
 
             if(selected_crease)
             {         
@@ -237,10 +344,10 @@
             }
             
             selected_cid = cid;
-            selected_crease = origami.highLightCrease(svg, selected_cid, true);
+            selected_crease = selected_origami.highLightCrease(svg, selected_cid, true);
 
             // split the net
-            origami.split(cid, svg1, svg2);
+            selected_origami.split(cid, svg1, svg2);
 
             // show the export buttons
             $('.export-subnet').hide().fadeIn();

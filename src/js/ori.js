@@ -311,18 +311,18 @@ Origami.Model.prototype.foldToPercentage = function(percentage) {
     this.foldTo(cfg);
 };
 
-Origami.Model.prototype.getCrease = function(cids, vid1, vid2) {
-    for(var i=0;i<cids.length;++i)
+Origami.Model.prototype.getCrease = function(vid1, vid2) {
+    for(var i=0;i<this.creases.length;++i)
     {
-        var c = this.creases[cids[i]];
+        var c = this.creases[i];
         if((c.vid1 == vid1 && c.vid2 == vid2) || (c.vid1 == vid2 && c.vid2 == vid1))
             return c;
     }
     return null;
 }
 
-Origami.Model.prototype.isCrease = function(cids, vid1, vid2) {
-    return (this.getCrease(cids, vid1, vid2) != null);
+Origami.Model.prototype.isCrease = function(vid1, vid2) {
+    return (this.getCrease(vid1, vid2) != null);
 }
 
 // fold the origami to given configuration
@@ -390,13 +390,74 @@ Origami.Model.prototype.updateGeometry = function() {
 
 // draw model on the svg object
 // requires: js/svg/jquery.svg.min.js
-Origami.Model.prototype.drawSVG = function(svg) {
+// svg: canvas to draw
+// T: translation
+// S: scale
+// W: strokeWidth
+Origami.Model.prototype.drawSVG = function(svg, T, S, W) {
 
-    var fs = range(this.faces.length);
-    var cs = range(this.creases.length);
-    this.svg_cfg = this.drawSVGImpl(svg, fs, cs);    
+    // create a new path
+    var path = svg.createPath();
 
-    return this.svg_cfg;
+    // boundary
+    for(var i=0;i<this.faces.length;++i)
+    {
+        for(var j=1;j<=3;++j)
+        {
+            var vid1 = this.faces[i].vids[j-1];
+            var vid2 = this.faces[i].vids[j%3];
+            var v1 = this.flat_vertices[vid1];
+            var v2 = this.flat_vertices[vid2];
+
+            if(this.isCrease(vid1, vid2)) continue;
+
+            v1 = v1.clone().sub(T).multiplyScalar(S);
+            v2 = v2.clone().sub(T).multiplyScalar(S);
+
+            path.move(v1.x, v1.z).line(v2.x, v2.z);
+        }
+    }
+
+    svg.path(path, {fill: 'none', stroke: '#000000', strokeWidth: W*1.5});
+
+    path = svg.createPath();
+
+    // crease lines
+    for(var i=0;i<this.creases.length;++i)
+    {
+        var c = this.creases[i];
+        var v1 = this.flat_vertices[c.vid1];
+        var v2 = this.flat_vertices[c.vid2];
+
+        v1 = v1.clone().sub(T).multiplyScalar(S);
+        v2 = v2.clone().sub(T).multiplyScalar(S);
+
+        path.move(v1.x, v1.z).line(v2.x, v2.z);
+    }
+
+    var strokeDashArray = '' + W*3 + ',' + W*3;
+
+    svg.path(path, {
+        fill: 'none', 
+        stroke: '#999', 
+        'stroke-dasharray' : strokeDashArray,
+        strokeWidth: W
+    });    
+    
+    this.svg_cfg = {
+        shift : T,
+        scale : S,
+        strokeWidth: W,
+        strokeDashArray : strokeDashArray
+    };
+
+    // svg.configure({
+    //     //viewBox: viewBox, 
+    //     width:svg_width,
+    //     height:svg_height,
+    //     'raw-width': width,
+    //     'raw-height': height
+    //     }, true);
 }
 
 // compute bounding box based on faces (array of face ids)
@@ -533,8 +594,8 @@ Origami.Model.prototype.highLightCrease = function(svg, cid, selected) {
     var v1 = this.flat_vertices[c.vid1];    
     var v2 = this.flat_vertices[c.vid2];
 
-    v1 = v1.clone().sub(svg_cfg.shift).multiplyScalar(svg_cfg.scale);
-    v2 = v2.clone().sub(svg_cfg.shift).multiplyScalar(svg_cfg.scale);
+    v1 = v1.clone().sub(this.svg_cfg.shift).multiplyScalar(this.svg_cfg.scale);
+    v2 = v2.clone().sub(this.svg_cfg.shift).multiplyScalar(this.svg_cfg.scale);
     
     var node_cfg = {
         stroke: selected ? '#0000ff' : '#ff0000',
@@ -554,7 +615,7 @@ Origami.Model.prototype.highLightCrease = function(svg, cid, selected) {
 Origami.Model.prototype.getClosestCrease = function(p) {
 
     var min_dist = 1e10;
-    var threshold = 0.01 * Math.max(this.svg_cfg.width, this.svg_cfg.height);
+    var threshold = 10 * this.svg_cfg.strokeWidth;
     var cid = -1;
 
     for(var i=0;i<this.creases.length;++i)
@@ -563,8 +624,8 @@ Origami.Model.prototype.getClosestCrease = function(p) {
         var v1 = this.flat_vertices[c.vid1];
         var v2 = this.flat_vertices[c.vid2];
 
-        v1 = v1.clone().sub(svg_cfg.shift).multiplyScalar(svg_cfg.scale);
-        v2 = v2.clone().sub(svg_cfg.shift).multiplyScalar(svg_cfg.scale);
+        v1 = v1.clone().sub(this.svg_cfg.shift).multiplyScalar(this.svg_cfg.scale);
+        v2 = v2.clone().sub(this.svg_cfg.shift).multiplyScalar(this.svg_cfg.scale);
         
         var v = { x: v1.x, y : v1.z };
         var w = { x: v2.x, y : v2.z };
@@ -585,6 +646,7 @@ Origami.Model.prototype.getClosestCrease = function(p) {
 }
 
 /// create a sub model/net/ori from the given face ids and crease ids
+/// it will not scale/translate the sub model
 Origami.Model.prototype.createSubModel = function(fids, cids) {
     // create an object
     var obj = {
