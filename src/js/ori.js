@@ -776,7 +776,7 @@ Origami.Model.prototype.createSubModel = function(fids, cids) {
 };
 
 /// split the model into two by cutting along the given crease line
-Origami.Model.prototype.split = function(cid, svg1, svg2) {
+Origami.Model.prototype.split = function(cid) {
 
     // the splitting crease
     var crease = this.creases[cid];

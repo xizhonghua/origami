@@ -8,6 +8,7 @@
 
         <script src='https://code.jquery.com/jquery-2.1.3.min.js'></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js"></script>
         <script src="js/svg/jquery.svg.min.js"></script>
         <script src='js/extension.js'></script>
         <script src="js/geometry.js"></script>
@@ -32,9 +33,9 @@
             <div id="canvas" class="center svg-canvas">
             </div>
 
-            <div class="center">
-            <button type="button" class="export-subnet" sub-net-id="1">Export Sub Net 1</button>
-            <button type="button" class="export-subnet" sub-net-id="2">Export Sub Net 2</button>
+            <div class="center" id="export">
+                <button type="button" id="export-svg">Export Svg</button>
+                <button type="button" id="export-ori">Export Ori</button>
             </div>
 
             <div id="temp-canvas" class="svg-canvas">                        
@@ -86,7 +87,7 @@
 
         $('#title').hide();
         $('.svg-canvas').hide();
-        $('.export-subnet').hide();
+        $('#export').hide();
 
         function clear_canvas() {
             origamis = [];
@@ -211,20 +212,63 @@
         });                            
     
 
-        // export subnets
-        $('.export-subnet').click(function(){
-            var sub_net_id = $(this).attr('sub-net-id');
-            var sub_net = sub_net_id == "1" ? svg1 : svg2;
-            var text = sub_net.toSVG();
-            var data = new Blob([text], {type : 'data:application/octet-stream'});
+        // export svg
+        $('#export-svg').click(function(){
+            
+            var zip = new JSZip();
+
+            $.each(origamis, function(index, origami) {
+                var box = origami.geometry.boundingBox;
+
+                var size = box.size();
+                var width = size.x;
+                var height = size.z;         
+
+                // tranlsate
+                var T = box.min;
+                // no scaling
+                var S = 1.0;
+                // strokeWidth
+                var W = Math.max(width, height)*0.002;
+
+                // clear the canvas
+                svg_temp.clear();
+
+                // draw, no scale
+                origami.drawSVG(svg_temp, T, S, W);
+
+                // set svg size
+                svg_temp.configure({                
+                    width:width,
+                    height:height
+                }, true);
+
+                var text = svg_temp.toSVG();
+
+                console.log(text);
+
+                var svg_filename = filename + '_sub_' + index + '.svg';
+
+                zip.file(svg_filename, text);
+            });
+
+            var content = zip.generate({type:'blob'});
+
+            console.log(content);         
+                        
+            var data = new Blob([content], {type : 'data:application/zip'});
             if(export_file_url)
                 window.URL.revokeObjectURL(export_file_url);
             export_file_url = window.URL.createObjectURL(data);
             
             var a = $('#hidden-link').get(0);            
             a.href = export_file_url;
-            a.download = filename + '_sub_' + sub_net_id + '.svg';
+            a.download = filename + '_svgs.zip';
             a.click();
+        });
+
+        $('#export-ori').click(function(){
+
         });
 
         $("html").on("dragover", function(event) {
@@ -337,7 +381,7 @@
             selected_cid = cid;
 
             // split the net
-            var subs = selected_origami.split(cid, svg1, svg2);
+            var subs = selected_origami.split(cid);
 
             origamis.splice(origamis.indexOf(selected_origami), 1);
             origamis.push.apply(origamis, subs);
@@ -347,7 +391,7 @@
             draw();
 
             // show the export buttons
-            $('.export-subnet').hide().fadeIn();
+            $('#export').hide().fadeIn();
 
         });        
         </script>    
