@@ -20,6 +20,7 @@ Origami.StreamReader.prototype.readlineItem = function(parseFun) {
     return parseFun(this.readline());
 };
 
+
 Origami.StreamReader.prototype.readlineArray = function(parseFun, d) {
     d = d || ' ';
 
@@ -30,6 +31,19 @@ Origami.StreamReader.prototype.readlineArray = function(parseFun, d) {
             items[i] = parseFun(items[i]);
     return items;
 };
+
+// read n lines
+Origami.StreamReader.prototype.readArray = function(n, parseFun) {
+    var items = [];
+
+    for(var i=0;i<n;++i) {
+        var item = this.readline();
+        if (parseFun) item = parseFun(item)
+        items.push(item)
+    }
+
+    return items;
+}
 
 Origami.StreamReader.prototype.readlineInt = function() {
     return this.readlineItem(parseInt);
@@ -45,6 +59,14 @@ Origami.StreamReader.prototype.readlineIntArray = function(d) {
 
 Origami.StreamReader.prototype.readlineFloatArray = function(d) {
     return this.readlineArray(parseFloat);
+};
+
+Origami.StreamReader.prototype.readIntArray = function(n) {
+    return this.readArray(n, parseInt);
+};
+
+Origami.StreamReader.prototype.readFloatArray = function(n) {
+    return this.readArray(n, parseFloat);
 };
 
 

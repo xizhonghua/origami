@@ -63,6 +63,31 @@ function init()
 
 }
 
+function initModel()
+{
+    origami.loaded = true;
+    origami.foldTo(origami.goal_cfg);
+
+    mesh = new THREE.Mesh( origami.geometry, materials[0] );
+    edges = new THREE.Mesh( origami.geometry, materials[1] );
+    mesh.name = 'mesh';
+    edges.name = 'edges';
+    scene.add( mesh );
+    scene.add( edges );
+            
+    resetCamera();
+
+    animation_step = 1;
+
+    dir = 1;
+
+    percentage = 0.0;
+
+    animation = true;
+
+    if(!rendered) render();
+}
+
 function loadModel(model_url, traj_url, callback)
 {
     // first remove existing model
@@ -72,29 +97,9 @@ function loadModel(model_url, traj_url, callback)
 
     origami.load(model_url, traj_url, function(){
 
-        origami.foldTo(origami.goal_cfg);
-
         console.log('origami loaded!');
-        
-        
-        mesh = new THREE.Mesh( origami.geometry, materials[0] );
-        edges = new THREE.Mesh( origami.geometry, materials[1] );
-        mesh.name = 'mesh';
-        edges.name = 'edges';
-        scene.add( mesh );
-        scene.add( edges );
-                
-        resetCamera();
 
-        animation_step = 1;
-
-        dir = 1;
-
-        percentage = 0.0;
-
-        animation = true;
-
-        if(!rendered) render();
+        initModel();
 
         if(callback) callback();
     });

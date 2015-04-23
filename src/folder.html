@@ -34,8 +34,9 @@
         </div>
         <script src="js/OrbitControls.js"></script>
         <script src='js/extension.js'></script>
+        <script src="js/io.js"></script>
         <script src='js/ori.js'></script>
-        <script src='js/folder.js'></script>      
+        <script src='js/folder.js'></script>  
         <script>
         var app_name = 'Origami Folder';
 
@@ -83,7 +84,75 @@
 
             // load the first model
             $("button")[0].click();
-        });                
+        });
+
+        // drag and drop
+
+        $("html").on("dragover", function(event) {
+            event.preventDefault();  
+            event.stopPropagation();
+            //$(this).addClass('dragging');
+        });
+
+        $("html").on("dragleave", function(event) {
+            event.preventDefault();  
+            event.stopPropagation();
+            //$(this).removeClass('dragging');
+        });
+
+        $("html").on("drop", function(event) {
+            event.preventDefault();  
+            event.stopPropagation();
+            var files = event.originalEvent.dataTransfer.files;
+            if(!files) return;
+
+            // only read the first file
+            var file = files[0];
+            var loader = null;
+            var is_model_file = false;
+            var is_traj_file = false
+
+            if(file.name.endsWith('.json')) {
+                loader = new Origami.JSONLoader();
+                is_model_file = true;
+                //TODO check file type...
+            }
+            else if(file.name.endsWith('.ori')) {
+                loader = new Origami.ORILoader();
+                is_model_file = true;
+            }
+            else if(file.name.endsWith('.trj')) {
+                loader = new Origami.TRJLoader();
+                is_traj_file = true;            
+            }
+            else {
+                return;
+            }
+
+            if(is_model_file) {
+                loader.load(file, function(obj) {                
+
+                    removeModel();
+
+                    origami = new Origami.Model();
+
+                    origami.build(obj);                
+
+                    initModel()
+
+                    $("#title").html(app_name + " - " + file.name)
+                    .css("left", ($(document).width()-$("#title").width())/2);
+                });
+            }
+
+            if(is_traj_file) {
+                loader.load(file, function(obj){
+                    // set path ...
+                    origami.setFoldingPath(obj.trajs);
+                });
+            }
+        
+        });
 
         </script>
     </body>

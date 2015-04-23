@@ -134,12 +134,45 @@ Origami.ORILoader.prototype.load = function(file, callback) {
 
         obj.base_face_id = sr.readlineInt();
 
-        obj.ordered_face_ids = sr.readlineIntArray();
+        obj.ordered_face_ids = sr.readIntArray(fsize);
         
         if(callback) callback(obj);
     }
 
     reader.readAsText(file, 'UTF-8');
+}
+
+Origami.TRJLoader = function() {}
+
+// requires io.js
+Origami.TRJLoader.prototype.load = function(file, callback) {
+    var reader = new FileReader();
+
+    reader.onload = function(e) {
+        var text = reader.result;
+
+        var lines = text.split('\n');
+
+        var sr = new Origami.StreamReader(lines);
+
+        var obj = {
+            trajs : []
+        };
+
+        while(!sr.eof())
+        {
+            // read a line as a state
+            var traj = sr.readlineFloatArray();
+            traj = traj.map(function(x) { return x * Math.PI / 180.0; });
+            // check dof of the trajectoy
+            if(obj.trajs.length > 0 && traj.length != obj.trajs[obj.trajs.length-1].length) continue;
+            obj.trajs.push(traj);
+        }
+        
+        if(callback) callback(obj);
+    }
+
+    reader.readAsText(file, 'UTF-8');   
 }
 
 
