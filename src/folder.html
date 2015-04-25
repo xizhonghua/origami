@@ -64,22 +64,22 @@
                 $("<button></button>").attr(
                     {
                         "type" : "button",
-                        "model" : model.model_url,
-                        "traj" : model.traj_url,
+                        "components" : JSON.stringify(model.components),                        
                         "model-name" : model.name
                     }
                 ).html(model.name).appendTo($("#model-selector"));
             }
 
-            $("button").click(function() {
-                model_url = $(this).attr("model");
-                traj_url = $(this).attr("traj");
+            $("button").click(function() {                
                 model_name = $(this).attr("model-name");
-                $("#title").html(app_name + " - loading...");
-                loadModel(model_url, traj_url, function(){
-                    $("#title").html(app_name + " - " + model_name)
+                components = JSON.parse($(this).attr("components"));
+
+                loadModels(components, function(){
+                     $("#title").html(app_name + " - " + model_name)
                     .css("left", ($(document).width()-$("#title").width())/2);
-                });
+                });                
+
+                $("#title").html(app_name + " - loading...");
             });
 
             // load the first model

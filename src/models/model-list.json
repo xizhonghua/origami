@@ -1,58 +1,68 @@
 {
-    "models": [
-        {
-            "name":"Bunny",
-            "model_url":"models/bunny-128_94716.ori.json", 
-            "traj_url":"models/bunny-128_94716_1427762975.trj.json"
-        },
-        {
-            "name":"Bunny-body",
-            "model_url":"models/bunny-128_patch_0_16662.ori.json", 
-            "traj_url":"models/bunny-128_patch_0_16662_1427420191.trj.json"
-        },
-        {
-            "name":"MoneyBox",
-            "model_url":"models/moneybox-128.ori.json", 
-            "traj_url":"models/moneybox-128.trj1.json"
-        },
-        {
-            "name":"Periscope",
-            "model_url":"models/periscope.ori.json",
-            "traj_url":"models/periscope_1428327072.trj.json"
-        },
-        {
-            "name":"Periscope2",
-            "model_url":"models/periscope2.ori.json",
-            "traj_url":"models/periscope2_1427035284.trj.json"
-        },
-        {
-            "name":"Sphere1",
-            "model_url":"models/sphere-162_79707.ori.json"
-        },
-        {
-            "name":"Sphere2",
-            "model_url":"models/sphere-deformed-5.ori.json",
-            "traj_url":"models/sphere-deformed-5.trj.json"  
-        },
-        {
-            "name":"cube",
-            "model_url":"models/cube2_273018.ori.json",
-            "traj_url":"models/cube2_273018_1428273447.trj.json"
-        },
-        {
-            "name":"cube-ordered",
-            "model_url":"models/cube2_273018.ori.json",
-            "traj_url":"models/cube2_273018_1428273052.trj.json"
-        },
-        {
-            "name":"star-024",
-            "model_url":"models/star-024_18811.ori.json",
-            "traj_url":"models/star-024_18811_1428281430.trj.json"
-        },
-        {
-            "name":"star-4",
-            "model_url":"models/star-4split.ori.json",
-            "traj_url":"models/star-4split.trj.json"
-        }
-    ]
+    "models": [{
+        "name": "Bunny",
+        "components": [{
+            "model_url": "models/bunny-128_94716.ori.json",
+            "traj_url": "models/bunny-128_94716_1427762975.trj.json"
+        }]
+    }, {
+        "name": "Bunny-body",
+        "components": [{
+            "model_url": "models/bunny-128_patch_0_16662.ori.json",
+            "traj_url": "models/bunny-128_patch_0_16662_1427420191.trj.json"
+        }]
+    }, {
+        "name": "MoneyBox",
+        "components": [{
+            "model_url": "models/moneybox-128.ori.json",
+            "traj_url": "models/moneybox-128.trj1.json"
+        }]
+    }, {
+        "name": "Periscope",
+        "components": [{
+            "model_url": "models/periscope.ori.json",
+            "traj_url": "models/periscope_1428327072.trj.json"
+        }]
+    }, {
+        "name": "Periscope2",
+        "components": [{
+            "model_url": "models/periscope2.ori.json",
+            "traj_url": "models/periscope2_1427035284.trj.json"
+        }]
+    }, {
+        "name": "Sphere1",
+        "components": [{
+            "model_url": "models/sphere-162_79707.ori.json"
+        }]
+    }, {
+        "name": "Sphere2",
+        "components": [{
+            "model_url": "models/sphere-deformed-5.ori.json",
+            "traj_url": "models/sphere-deformed-5.trj.json"
+        }]
+    }, {
+        "name": "cube",
+        "components": [{
+            "model_url": "models/cube2_273018.ori.json",
+            "traj_url": "models/cube2_273018_1428273447.trj.json"
+        }]
+    }, {
+        "name": "cube-ordered",
+        "components": [{
+            "model_url": "models/cube2_273018.ori.json",
+            "traj_url": "models/cube2_273018_1428273052.trj.json"
+        }]
+    }, {
+        "name": "star-024",
+        "components": [{
+            "model_url": "models/star-024_18811.ori.json",
+            "traj_url": "models/star-024_18811_1428281430.trj.json"
+        }]
+    }, {
+        "name": "star-4",
+        "components": [{
+            "model_url": "models/star-4split.ori.json",
+            "traj_url": "models/star-4split.trj.json"
+        }]
+    }]
 }

@@ -1,13 +1,18 @@
-var scene, camera, renderer, origami, mesh, materials, controls, percentage, animation_step, dir, animation, rendered;
+var scene, camera, renderer, mesh, materials, controls, percentage, animation_step, dir, animation, rendered;
+
+var origami;
+
+var origamis = [];
 
 // for animation
 var max_p = 400;
 var delay_p = 0.1*max_p;
 
+// init scene, camera, controls, lights, materials, etc
 function init()
 {
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.01, 1000 );
+    camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.001, 1e6 );
 
     controls = new THREE.OrbitControls( camera );
 
@@ -63,20 +68,18 @@ function init()
 
 }
 
-function initModel()
-{
-    origami.loaded = true;
-    origami.foldTo(origami.goal_cfg);
-
+// create 3d obj for the given origami and add it the senece 
+function addModel(origami) {
     mesh = new THREE.Mesh( origami.geometry, materials[0] );
     edges = new THREE.Mesh( origami.geometry, materials[1] );
-    mesh.name = 'mesh';
-    edges.name = 'edges';
+    mesh.name = origami.name + '_mesh';
+    edges.name = origami.name + '_edges';
     scene.add( mesh );
     scene.add( edges );
-            
-    resetCamera();
+}
 
+function resetAnimation()
+{
     animation_step = 1;
 
     dir = 1;
@@ -84,49 +87,91 @@ function initModel()
     percentage = 0.0;
 
     animation = true;
+}
+
+function resetScene()
+{        
+    resetCamera();
+    resetAnimation();
 
     if(!rendered) render();
 }
 
 function loadModel(model_url, traj_url, callback)
 {
-    // first remove existing model
-    removeModel();
-
     origami = new Origami.Model();
 
-    origami.load(model_url, traj_url, function(){
+    // put in the array
+    origamis.push(origami);
 
-        console.log('origami loaded!');
+    origami.load(model_url, traj_url, function() {
 
-        initModel();
+        origami.loaded = true;
+        origami.foldTo(origami.goal_cfg);
+
+        addModel(origami);
+
+        console.log('origami loaded!');        
 
         if(callback) callback();
     });
 }
 
+// clear scene
+// read all given models
+function loadModels(models, callback)
+{
+    // first remove existing model
+    removeModel();
+
+    var count = 0;
+
+    var loaded_handler = function() {
+        // all loaded
+        if(++count == models.length) {
+
+            // reset scene
+            resetScene();
+
+            if(callback) callback();
+        }
+    };
+
+    // load each model
+    $.each(models, function(index, model){
+        loadModel(model.model_url, model.traj_url, loaded_handler)
+    });
+}
+
 function resetCamera()
 {
-    camera.position.z = origami.geometry.boundingSphere.radius * 3;
+    //TODO...
+
+    camera.position.z = origamis[0].geometry.boundingSphere.radius * 3;
     camera.position.x = 0;
     camera.position.y = 0;
     camera.rotation.set(0,0,0);
     controls.rotateUp(0.8);
-    // controls.rotateLeft(1.57);
     controls.update();
 }
 
 function removeModel()
 {
-    var mesh = scene.getObjectByName('mesh');
-    var edges = scene.getObjectByName('edges');
+    // remove each origami model from scene
+    $.each(origamis, function(index, ori) {
+        var mesh = scene.getObjectByName(ori.name + '_mesh');
+        var edges = scene.getObjectByName(ori.name + '_edges');
 
-    // prevent memory leak
-    if(mesh) mesh.geometry.dispose();
-    if(edges) edges.geometry.dispose();
+        // prevent memory leak
+        if(mesh) mesh.geometry.dispose();
+        if(edges) edges.geometry.dispose();
+        
+        scene.remove( mesh );
+        scene.remove( edges );
+    });
     
-    scene.remove( mesh );
-    scene.remove( edges );
+    // clear the array
+    origamis = [];
 }
 
 function render()
@@ -149,7 +194,9 @@ function render()
         }
     }
 
-    origami.foldToPercentage(percentage/max_p);
+    $.each(origamis, function(index, ori){
+        ori.foldToPercentage(percentage/max_p);    
+    });
 
     renderer.render(scene, camera);
 }

@@ -6,6 +6,7 @@
 
 // namespace
 var Origami = Origami || {};
+Origami.Id = 0;
 
 // crease class
 Origami.Crease = function(vid1, vid2, folding_angle, fid, pid) {
@@ -39,6 +40,7 @@ Origami.Face = function(vid1, vid2, vid3, pid, cid) {
 
 // model class
 Origami.Model = function() {
+    this.name = 'Origami_' + (++Origami.Id);
 
     // flat vertices, array of THREE.vector3
     this.flat_vertices = [];
@@ -63,6 +65,15 @@ Origami.Model = function() {
 
     // ordered face list
     this.ordered_face_ids = []; 
+
+    // rotation matrix
+    this.rotation_axis = new THREE.Vector3( 0, 1, 0 );
+
+    // rotation angle
+    this.rotation_angle = 0.0;
+
+    // translation
+    this.translation = new THREE.Vector3(0, 0, 0);
 
     // start and goal cfg
     this.start_cfg = [];
@@ -95,7 +106,6 @@ Origami.JSONLoader.prototype.load = function(file, callback) {
 
     reader.readAsText(file, 'UTF-8');
 }
-
 
 Origami.ORILoader = function() {}
 
@@ -135,6 +145,21 @@ Origami.ORILoader.prototype.load = function(file, callback) {
         obj.base_face_id = sr.readlineInt();
 
         obj.ordered_face_ids = sr.readIntArray(fsize);
+
+        if(!sr.eof())
+        {
+            var rotation = sr.readlineFloatArray();
+            if(rotation.length>=4)
+            {
+                var translation = sr.readlineFloatArray();
+                if (translation.length>=3)
+                {
+                    //both rotation and translation exists
+                    obj.rotation = rotation
+                    obj.translation = translation;
+                }    
+            }
+        }
         
         if(callback) callback(obj);
     }
@@ -265,6 +290,18 @@ Origami.Model.prototype.build = function(model) {
     }
 
     this.ordered_face_ids = model.ordered_face_ids;
+
+    // rotation and translation
+    if (model.rotation && model.rotation.length >= 4)
+    {
+        this.rotation_axis = new THREE.Vector3(model.rotation[0], model.rotation[1], model.rotation[2]);
+        this.rotation_angle = model.rotation[3];
+    }
+
+    if(model.translation && model.translation.length >= 3)
+    {
+        this.translation = new THREE.Vector3(model.translation[0], model.translation[1], model.translation[2]);
+    }
 
     // set start and goal status
 
