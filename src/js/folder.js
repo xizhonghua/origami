@@ -280,7 +280,9 @@ $(document).keypress(function(event) {
             break;
         // 'e'
         case 101:
-            edges.visible = !edges.visible;
+            $.each(origamis, function(index, origami) {
+                origami.edges.visible = !origami.edges.visible;                
+            });            
             break;
         // 't'
         case 116:
