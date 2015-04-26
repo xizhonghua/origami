@@ -14,19 +14,26 @@
     }, {
         "name": "Horse",
         "components": [{
-            "model_url": "models/horse/horse-312_patch_0.ori"
+            "model_url": "models/horse/horse-312_patch_0.ori",
+            "traj_url": "models/horse/horse-312_patch_0.trj"
         }, {
-            "model_url": "models/horse/horse-312_patch_1.ori"
+            "model_url": "models/horse/horse-312_patch_1.ori",
+            "traj_url": "models/horse/horse-312_patch_1.trj"
         }, {
-            "model_url": "models/horse/horse-312_patch_2.ori"
+            "model_url": "models/horse/horse-312_patch_2.ori",
+            "traj_url": "models/horse/horse-312_patch_2.trj"
         }, {
-            "model_url": "models/horse/horse-312_patch_3.ori"
+            "model_url": "models/horse/horse-312_patch_3.ori",
+            "traj_url": "models/horse/horse-312_patch_3.trj"
         }, {
-            "model_url": "models/horse/horse-312_patch_4.ori"
+            "model_url": "models/horse/horse-312_patch_4.ori",
+            "traj_url": "models/horse/horse-312_patch_4.trj"
         }, {
-            "model_url": "models/horse/horse-312_patch_5.ori"
+            "model_url": "models/horse/horse-312_patch_5.ori",
+            "traj_url": "models/horse/horse-312_patch_5.trj"
         }, {
-            "model_url": "models/horse/horse-312_patch_6.ori"
+            "model_url": "models/horse/horse-312_patch_6.ori",
+            "traj_url": "models/horse/horse-312_patch_6.trj"
         }]
     }, {
         "name": "MoneyBox",

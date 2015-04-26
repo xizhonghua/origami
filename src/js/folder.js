@@ -101,7 +101,24 @@ function resetAnimation()
 }
 
 function resetScene()
-{        
+{
+    // compute COM and R on entire model...
+    var all_vertices = [];
+
+    $.each(origamis, function(index, origami){
+        all_vertices.push.apply(all_vertices, origami.vertices);
+    });
+
+    var bounding_sphere = new THREE.Sphere();
+    bounding_sphere.setFromPoints(all_vertices);
+
+    console.log(bounding_sphere);
+
+    // scale the model to have R = 1.0
+    $.each(origamis, function(index, origami) {
+        origami.scale(1.0/bounding_sphere.radius);
+    });
+
     resetCamera();
     resetAnimation();
 
@@ -156,9 +173,7 @@ function loadModels(models, callback)
 
 function resetCamera()
 {
-    //TODO...
-
-    camera.position.z = origamis[0].geometry.boundingSphere.radius * 3;
+    camera.position.z = 3;
     camera.position.x = 0;
     camera.position.y = 0;
     camera.rotation.set(0,0,0);
@@ -252,6 +267,16 @@ $(document).keypress(function(event) {
         case 93:
             animation_step = animation_step/1.4;
             animation_step = Math.max(animation_step, 0.1);
+            break;
+        // 'c': random colors
+        case 99:
+            $.each(origamis, function(index, origami){
+                var m = origami.mesh.material;
+                if(m.color.getHex() == 0x996633)
+                    m.color.setRGB(Math.random(), Math.random(), Math.random());
+                else
+                    m.color.setHex(0x996633);                    
+            });
             break;
         // 'e'
         case 101:

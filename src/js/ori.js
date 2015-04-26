@@ -175,30 +175,36 @@ Origami.ORILoader.prototype.load = function(file, callback) {
 
 Origami.TRJLoader = function() {}
 
+Origami.TRJLoader.prototype.parse = function(trj_str) {
+    var lines = trj_str.split('\n');
+
+    var sr = new Origami.StreamReader(lines);
+
+    var obj = {
+        trajs : []
+    };
+
+    while(!sr.eof())
+    {
+        // read a line as a state
+        var traj = sr.readlineFloatArray();
+        traj = traj.map(function(x) { return x * Math.PI / 180.0; });
+        // check dof of the trajectoy
+        if(obj.trajs.length > 0 && traj.length != obj.trajs[obj.trajs.length-1].length) continue;
+        obj.trajs.push(traj);
+    }
+
+    return obj;    
+}
 // requires io.js
 Origami.TRJLoader.prototype.load = function(file, callback) {
     var reader = new FileReader();
+    var self = this;
 
     reader.onload = function(e) {
         var text = reader.result;
 
-        var lines = text.split('\n');
-
-        var sr = new Origami.StreamReader(lines);
-
-        var obj = {
-            trajs : []
-        };
-
-        while(!sr.eof())
-        {
-            // read a line as a state
-            var traj = sr.readlineFloatArray();
-            traj = traj.map(function(x) { return x * Math.PI / 180.0; });
-            // check dof of the trajectoy
-            if(obj.trajs.length > 0 && traj.length != obj.trajs[obj.trajs.length-1].length) continue;
-            obj.trajs.push(traj);
-        }
+        var obj = self.parse(text);
         
         if(callback) callback(obj);
     }
@@ -223,13 +229,24 @@ Origami.Model.prototype.load = function(model_url, traj_url, callback) {
             my_callback(me);
         }
         else {
-            $.getJSON(traj_url, function(data, textStatus) {
+            if(traj_url.endsWith('.json')) {
+                $.getJSON(traj_url, function(data, textStatus) {
 
-                console.log("traj = " + traj_url + " loaded!");
+                    console.log("traj = " + traj_url + " loaded!");
 
-                me.setFoldingPath(data.trajs);
-                my_callback(me);
-            });
+                    me.setFoldingPath(data.trajs);
+                    my_callback(me);
+                });
+            } else if (traj_url.endsWith('.trj')) {
+                $.get(traj_url, function(traj_str, textStatus){
+                    var data = new Origami.TRJLoader().parse(traj_str);
+
+                    console.log("traj = " + traj_url + " loaded!");
+
+                    me.setFoldingPath(data.trajs);
+                    my_callback(me);
+                });
+            }
         }
     }
 
@@ -249,6 +266,9 @@ Origami.Model.prototype.load = function(model_url, traj_url, callback) {
     } else if(model_url.endsWith('.ori')){
         // ori version
         $.get(model_url, function(ori_str, textStatus) {
+
+            console.log("model = " + model_url + " loaded!");
+
             var ori_loader = new Origami.ORILoader();
             var model = ori_loader.parse(ori_str);
 
@@ -324,11 +344,7 @@ Origami.Model.prototype.build = function(model) {
     }
 
     // translate the model first
-    for(var i=0;i<model.vertices.length;++i)
-    {        
-        this.vertices[i].add(this.translation);
-        this.flat_vertices[i].add(this.translation);
-    }
+    this.translate(this.translation);
 
     // set start and goal status
 
@@ -371,6 +387,31 @@ Origami.Model.prototype.buildThreeGeometry = function() {
 
     this.updateGeometry();
 }
+
+Origami.Model.prototype.translate = function(v) {
+    for(var i=0;i<this.vertices.length;++i)
+    {
+        this.vertices[i].add(v);
+        this.flat_vertices[i].add(v);
+    }
+
+    this.updateGeometry();
+
+    return this;
+}
+
+Origami.Model.prototype.scale = function(scale) {
+    for(var i=0;i<this.vertices.length;++i)
+    {
+        this.vertices[i].multiplyScalar(scale);
+        this.flat_vertices[i].multiplyScalar(scale);
+    }
+
+    this.updateGeometry();
+
+    return this;
+}
+
 
 // set folding path
 Origami.Model.prototype.setFoldingPath = function(path) {    
