@@ -73,7 +73,7 @@ Origami.Model = function() {
     this.rotation_angle = 0.0;
 
     // translation
-    this.translation = new THREE.Vector3(0, 0, 0);
+    this.translation = new THREE.Vector3(0, 0, 0);    
 
     // start and goal cfg
     this.start_cfg = [];
@@ -110,58 +110,64 @@ Origami.JSONLoader.prototype.load = function(file, callback) {
 Origami.ORILoader = function() {}
 
 // requires io.js
+// parse string to obj
+Origami.ORILoader.prototype.parse = function(ori_str) {
+    var lines = ori_str.split('\n');
+
+    var sr = new Origami.StreamReader(lines);
+
+    var obj = {
+        vertices : [],
+        creases : [],
+        faces : [],
+        base_face_id : -1,
+        ordered_face_ids : []
+    }
+
+    var vsize = sr.readlineInt();        
+
+    for(var i=0;i<vsize;++i)            
+        obj.vertices.push(sr.readlineFloatArray());        
+
+    var csize = sr.readlineInt();
+
+    for(var i=0;i<csize;++i)
+        obj.creases.push(sr.readlineFloatArray());
+
+    var fsize = sr.readlineInt();
+    for(var i=0;i<fsize;++i)
+        obj.faces.push(sr.readlineIntArray());
+
+    obj.base_face_id = sr.readlineInt();
+
+    obj.ordered_face_ids = sr.readIntArray(fsize);
+
+    if(!sr.eof())
+    {
+        var rotation = sr.readlineFloatArray();
+        if(rotation.length>=4)
+        {
+            var translation = sr.readlineFloatArray();
+            if (translation.length>=3)
+            {
+                //both rotation and translation exists
+                obj.rotation = rotation
+                obj.translation = translation;                
+            }    
+        }
+    }
+    
+    return obj;
+}
+
 Origami.ORILoader.prototype.load = function(file, callback) {
     var reader = new FileReader();
+    var self = this;
 
     reader.onload = function(e) {
         var text = reader.result;
-
-        var lines = text.split('\n');
-
-        var sr = new Origami.StreamReader(lines);
-
-        var obj = {
-            vertices : [],
-            creases : [],
-            faces : [],
-            base_face_id : -1,
-            ordered_face_ids : []
-        }
-
-        var vsize = sr.readlineInt();        
-
-        for(var i=0;i<vsize;++i)            
-            obj.vertices.push(sr.readlineFloatArray());        
-
-        var csize = sr.readlineInt();
-
-        for(var i=0;i<csize;++i)
-            obj.creases.push(sr.readlineFloatArray());
-
-        var fsize = sr.readlineInt();
-        for(var i=0;i<fsize;++i)
-            obj.faces.push(sr.readlineIntArray());
-
-        obj.base_face_id = sr.readlineInt();
-
-        obj.ordered_face_ids = sr.readIntArray(fsize);
-
-        if(!sr.eof())
-        {
-            var rotation = sr.readlineFloatArray();
-            if(rotation.length>=4)
-            {
-                var translation = sr.readlineFloatArray();
-                if (translation.length>=3)
-                {
-                    //both rotation and translation exists
-                    obj.rotation = rotation
-                    obj.translation = translation;
-                }    
-            }
-        }
-        
-        if(callback) callback(obj);
+        var obj = self.parse(text);
+        callback(obj);        
     }
 
     reader.readAsText(file, 'UTF-8');
@@ -227,6 +233,8 @@ Origami.Model.prototype.load = function(model_url, traj_url, callback) {
         }
     }
 
+    console.log('loading origami model from ' + model_url + '...');
+
     if(model_url.endsWith('.json')) {
         // json version
         $.getJSON(model_url, function(model, textStatus) {
@@ -238,6 +246,17 @@ Origami.Model.prototype.load = function(model_url, traj_url, callback) {
 
             load_traj();        
         });
+    } else if(model_url.endsWith('.ori')){
+        // ori version
+        $.get(model_url, function(ori_str, textStatus) {
+            var ori_loader = new Origami.ORILoader();
+            var model = ori_loader.parse(ori_str);
+
+            // build the model
+            me.build(model);
+
+            load_traj();
+        });        
     }
 }
 
@@ -295,12 +314,20 @@ Origami.Model.prototype.build = function(model) {
     if (model.rotation && model.rotation.length >= 4)
     {
         this.rotation_axis = new THREE.Vector3(model.rotation[0], model.rotation[1], model.rotation[2]);
+        this.rotation_axis.normalize();
         this.rotation_angle = model.rotation[3];
     }
 
     if(model.translation && model.translation.length >= 3)
     {
         this.translation = new THREE.Vector3(model.translation[0], model.translation[1], model.translation[2]);
+    }
+
+    // translate the model first
+    for(var i=0;i<model.vertices.length;++i)
+    {        
+        this.vertices[i].add(this.translation);
+        this.flat_vertices[i].add(this.translation);
     }
 
     // set start and goal status

@@ -1,6 +1,4 @@
-var scene, camera, renderer, mesh, materials, controls, percentage, animation_step, dir, animation, rendered;
-
-var origami;
+var scene, camera, renderer, mesh, controls, percentage, animation_step, dir, animation, rendered;
 
 var origamis = [];
 
@@ -8,7 +6,7 @@ var origamis = [];
 var max_p = 400;
 var delay_p = 0.1*max_p;
 
-// init scene, camera, controls, lights, materials, etc
+// init scene, camera, controls, lights, etc
 function init()
 {
     scene = new THREE.Scene();
@@ -47,12 +45,16 @@ function init()
     scene.add( lights[0] );
     scene.add( lights[1] );
     scene.add( lights[2] );
+}
 
-    materials = [ 
+// create 3d obj for the given origami and add it the senece 
+function addModel(origami) {
+    var materials = [ 
         new THREE.MeshPhongMaterial( { 
             color: 0x996633, 
             specular: 0x050505,
-            shininess: 50
+            shininess: 50,
+            side : THREE.DoubleSide
         }),
         // new THREE.MeshLambertMaterial({
         //     color: 0x996633, 
@@ -64,18 +66,27 @@ function init()
         })
     ];
 
-    materials[0].side = THREE.DoubleSide;
+    origami.mesh = new THREE.Mesh( origami.geometry, materials[0] );
+    origami.edges = new THREE.Mesh( origami.geometry, materials[1] );
+    origami.mesh.name = origami.name + '_mesh';
+    origami.edges.name = origami.name + '_edges';
 
-}
+    // model view matrix
+    var mvm = new THREE.Matrix4();
 
-// create 3d obj for the given origami and add it the senece 
-function addModel(origami) {
-    mesh = new THREE.Mesh( origami.geometry, materials[0] );
-    edges = new THREE.Mesh( origami.geometry, materials[1] );
-    mesh.name = origami.name + '_mesh';
-    edges.name = origami.name + '_edges';
-    scene.add( mesh );
-    scene.add( edges );
+    //mvm.setPosition(origami.translation);
+    mvm.makeRotationAxis(origami.rotation_axis, origami.rotation_angle);
+    //mvm.setPosition(origami.translation);
+
+    origami.mesh.matrix = mvm.clone(); 
+    origami.edges.matrix = mvm.clone();
+    origami.mesh.matrixAutoUpdate = false;
+    origami.edges.matrixAutoUpdate = false;
+    // origami.mesh.position = origami.translation.clone();
+    // origami.edges.position = origami.translation.clone();
+
+    scene.add( origami.mesh );
+    scene.add( origami.edges );
 }
 
 function resetAnimation()
@@ -99,7 +110,7 @@ function resetScene()
 
 function loadModel(model_url, traj_url, callback)
 {
-    origami = new Origami.Model();
+    var origami = new Origami.Model();
 
     // put in the array
     origamis.push(origami);
@@ -111,7 +122,7 @@ function loadModel(model_url, traj_url, callback)
 
         addModel(origami);
 
-        console.log('origami loaded!');        
+        console.log(origami.name + ' loaded!');        
 
         if(callback) callback();
     });
@@ -168,6 +179,9 @@ function removeModel()
         
         scene.remove( mesh );
         scene.remove( edges );
+
+        ori.mesh = null;
+        ori.edges = null;
     });
     
     // clear the array
@@ -244,9 +258,13 @@ $(document).keypress(function(event) {
             edges.visible = !edges.visible;
             break;
         // 't'
-        case 116:        
-            materials[0].opacity = materials[0].opacity == 1.0 ? 0.5 : 1.0;            
-            materials[0].transparent = materials[0].opacity == 1.0 ? false : true;
+        case 116:
+            $.each(origamis, function(index, origami) {
+                var m = origami.mesh.material;
+                m.opacity = m.opacity == 1.0 ? 0.5 : 1.0;            
+                m.transparent = m.opacity == 1.0 ? false : true;
+            })
+            
             break;
         // 'x'
         case 120:
