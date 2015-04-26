@@ -7,7 +7,8 @@
 
 | Origami Folder  |
 |:---------------:| 
-| ![Folder](/screenshot/folder.png) |
+| ![Folder](/screenshot/folder1.png) |
+| ![Folder](/screenshot/folder2.png) |
 
 ### Live Deom
 * [Origami Folder](http://masc.cs.gmu.edu/origami/folder.html)
