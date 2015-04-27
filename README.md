@@ -7,8 +7,8 @@
 
 | Origami Folder  |
 |:---------------:| 
-| ![Folder](/screenshot/folder1.png) |
-| ![Folder](/screenshot/folder2.png) |
+| <img src="/screenshot/folder1.png" width="800"> |
+| <img src="/screenshot/folder2.png" width="800"> |
 
 ### Live Deom
 * [Origami Folder](http://masc.cs.gmu.edu/origami/folder.html)
@@ -22,7 +22,7 @@
 
 | Net-Spliiter  |
 |:---------------:| 
-| ![Folder](/screenshot/net-splitter.png) |
+| <img src="/screenshot/net-splitter.png" width="800">  |
 
 ### Live Deom
 * [Net Splitter](http://masc.cs.gmu.edu/origami/net.html)
