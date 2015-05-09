@@ -131,15 +131,24 @@
             }
 
             if(is_model_file) {
-                loader.load(file, function(obj) {                
+                loader.load(file, function(obj) { 
+                    removeModel();                    
 
-                    removeModel();
+                    var origami = new Origami.Model();
 
-                    origami = new Origami.Model();
+                    origami.build(obj);                                    
+                    origami.loaded = true;
+                    origami.foldTo(origami.goal_cfg);
 
-                    origami.build(obj);                
+                    // put in the array
+                    origamis.push(origami);
+                    
+                    addModel(origami);
 
-                    initModel()
+                    console.log(origami.name + ' loaded!');
+
+                    // reset scene, rescale
+                    resetScene();
 
                     $("#title").html(app_name + " - " + file.name)
                     .css("left", ($(document).width()-$("#title").width())/2);

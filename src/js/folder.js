@@ -311,7 +311,3 @@ $(document).keypress(function(event) {
 });
 
 init();
-
-
-
-

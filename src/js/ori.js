@@ -490,6 +490,8 @@ Origami.Model.prototype.foldTo = function(cfg) {
         var p2 = this.vertices[crease.vid2];
         var pid = face.pid;
 
+        console.log('fid = ' + fid + ' pid = ' + pid + ' vid1 = ' + crease.vid1 + ' vid2 = ' + crease.vid2);
+
         // computing folding matrix
         var transform_matrix = new THREE.Matrix4();
         ms[fid] = transform_matrix.makeTransform(p1, p2, folding_angle).multiply(ms[pid]);
