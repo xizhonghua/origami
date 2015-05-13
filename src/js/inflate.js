@@ -6,4 +6,5 @@ function inflate(cur_g, org_g, p) {
 // measure the number of hyperbolic vertices in the mesh
 function measure_hyperbolic(g)  {
 	//TODO
+	console.log('haha');
 }

@@ -34,6 +34,7 @@
 		<script src="http://threejs.org/build/three.min.js"></script>
 		<script src="http://threejs.org/examples/js/loaders/OBJLoader.js"></script>
 		<script src="http://threejs.org/examples/js/controls/TrackballControls.js"></script>
+		<script src="js/OBJLoader.js"</script>
 		<script src="js/inflate.js"></script>
 
 		<script>
@@ -115,13 +116,13 @@
 
 				// model
 
-				var loader = new THREE.OBJLoader( manager );
+				var loader = new OBJLoader( manager );
 				loader.load( 'models/beethoven.obj', function ( object ) {
 
 					//object.position.y = - 80;
 					scene.add( object );
 
-					//measure_hyperbolic(OBJ)
+					//measure_hyperbolic(object.children[0].geometry);
 
 				}, onProgress, onError );
 
