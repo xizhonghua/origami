@@ -34,6 +34,7 @@
 		<script src="http://threejs.org/build/three.min.js"></script>
 		<script src="http://threejs.org/examples/js/loaders/OBJLoader.js"></script>
 		<script src="http://threejs.org/examples/js/controls/TrackballControls.js"></script>
+		<script src="js/inflate.js"></script>
 
 		<script>
 
@@ -58,7 +59,7 @@
 
 				// camera
 				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
-				camera.position.z = 500;
+				camera.position.z = 30;
 
 				// control
 				controls = new THREE.TrackballControls( camera );
@@ -85,11 +86,11 @@
 				scene.add( ambient );
 
 				var directionalLight1 = new THREE.DirectionalLight( 0xffeedd );
-				directionalLight1.position.set( 0, 0, 1 );
+				directionalLight1.position.set( 1, -1, -0.3 );
 				scene.add( directionalLight1 );
 
 				var directionalLight2 = new THREE.DirectionalLight( 0xffeedd );
-				directionalLight1.position.set( 1, -1, 0 );
+				directionalLight1.position.set( 1, -1, 0.3 );
 				scene.add( directionalLight2 );
 				
 
@@ -115,10 +116,12 @@
 				// model
 
 				var loader = new THREE.OBJLoader( manager );
-				loader.load( 'http://threejs.org/examples/obj/male02/male02.obj', function ( object ) {
+				loader.load( 'models/beethoven.obj', function ( object ) {
 
-					object.position.y = - 80;
+					//object.position.y = - 80;
 					scene.add( object );
+
+					//measure_hyperbolic(OBJ)
 
 				}, onProgress, onError );
 
@@ -161,7 +164,7 @@
 
 			}
 
-		</script>
+		</script>		
 
 	</body>
 </html>
