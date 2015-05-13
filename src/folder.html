@@ -139,7 +139,13 @@
 
                     origami.build(obj);                
 
-                    initModel()
+                    // reset scene
+                    resetScene();
+
+                    origami.loaded = true;
+                    origami.foldTo(origami.goal_cfg);
+
+                    addModel(origami);
 
                     $("#title").html(app_name + " - " + file.name)
                     .css("left", ($(document).width()-$("#title").width())/2);
