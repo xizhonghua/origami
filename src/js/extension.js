@@ -60,6 +60,18 @@ THREE.Matrix4.prototype.makeTransform = function(p1, p2, theta) {
     return this;
 }
 
+// compute the area of the face
+THREE.Face3.prototype.area = function(g) {
+    var e1 = g.vertices[this.b].clone().sub(g.vertices[this.a]).length();
+    var e2 = g.vertices[this.c].clone().sub(g.vertices[this.b]).length();
+    var e3 = g.vertices[this.a].clone().sub(g.vertices[this.c]).length();
+
+    var s = (e1+e2+e3)/2;
+    var area = Math.sqrt(s*(s-e1)*(s-e2)*(s-e3));
+
+    return area;
+}
+
 // set the current array a linear blend of a->b by given percentage
 // a and b should have the same length
 Array.prototype.linearBlend = function(a, b, percentage) {

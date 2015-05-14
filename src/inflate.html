@@ -34,7 +34,8 @@
 		<script src="http://threejs.org/build/three.min.js"></script>
 		<script src="http://threejs.org/examples/js/loaders/OBJLoader.js"></script>
 		<script src="http://threejs.org/examples/js/controls/TrackballControls.js"></script>
-		<script src="js/OBJLoader.js"</script>
+		<script src="js/OBJLoader.js"></script>
+		<script src="js/extension.js"></script>
 		<script src="js/inflate.js"></script>
 
 		<script>
@@ -45,8 +46,16 @@
 
 			var controls;
 
+			var mesh;
+			var org_geometry;
+
 			var windowHalfX = window.innerWidth / 2;
 			var windowHalfY = window.innerHeight / 2;
+
+			var pressure = 1.0;
+			var E = 10.0;
+			var step = 0.0005;
+			var inflating = false;
 
 
 			init();
@@ -122,7 +131,9 @@
 					//object.position.y = - 80;
 					scene.add( object );
 
-					//measure_hyperbolic(object.children[0].geometry);
+					mesh = object.children[0];
+
+					org_geometry = mesh.geometry.clone();
 
 				}, onProgress, onError );
 
@@ -135,7 +146,8 @@
 
 				//
 
-				window.addEventListener( 'resize', onWindowResize, false );
+				window.addEventListener('resize', onWindowResize, false );
+				window.addEventListener('keypress', onWindowKeyPress, false );
 
 			}
 
@@ -149,13 +161,41 @@
 
 				renderer.setSize( window.innerWidth, window.innerHeight );
 
-			}		
+			}
+
+			function onWindowKeyPress(e) {
+				switch(e.keyCode)
+				{
+					// 'R': reset geometry
+					case 114:					
+						mesh.geometry = org_geometry.clone();
+						break;
+					// 'space': toogle inflating mesh
+					case 32:
+						inflating = !inflating
+						break;
+				}
+
+			}
+
+			function updateInfalting() {
+				var out = inflate(org_geometry, mesh.geometry, pressure, E, step);
+				mesh.geometry = out;
+
+				mesh.geometry.computeFaceNormals ();
+	            //mesh.geometry.computeVertexNormals ();
+	            mesh.geometry.verticesNeedUpdate = true;
+	            mesh.geometry.elementsNeedUpdate = true;
+	            mesh.geometry.normalsNeedUpdate = true;
+			}
 			
 
 			function animate() {
 
 				requestAnimationFrame( animate );
-				controls.update();
+
+				if(inflating) updateInfalting();
+				controls.update();				
 				render();
 			}
 
