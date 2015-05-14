@@ -166,7 +166,10 @@ OBJLoader.prototype = {
 
             object = objects[ i ];                     
 
-            material = new THREE.MeshLambertMaterial();
+            material = new THREE.MeshPhongMaterial({
+                 color: 0x996633, 
+            specular: 0x050505,
+            shininess: 50});
             material.name = object.material.name;
 
             object.geometry.computeFaceNormals ();

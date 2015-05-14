@@ -2,19 +2,16 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>three.js webgl - loaders - OBJ loader</title>
+        <title>Mesh Infalting</title>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
         <style>
-            body {
-                font-family: Monospace;
-                background-color: #000;
-                color: #fff;
+            body {                
+                background-color: #fff;                
                 margin: 0px;
                 overflow: hidden;
             }
             #info {
-                color: #fff;
                 position: absolute;
                 top: 10px;
                 width: 100%;
@@ -24,12 +21,14 @@
             }
             #info a, .button { color: #f00; font-weight: bold; text-decoration: underline; cursor: pointer }
         </style>
+        <link rel="stylesheet" type="text/css" href="style/main.css">
     </head>
 
     <body>
         <div id="info">
             Mesh Inflating
         </div>
+        <div id="copyright" source="copyright.html">
 
         <script src="http://threejs.org/build/three.min.js"></script>
         <script src="http://threejs.org/examples/js/loaders/OBJLoader.js"></script>
@@ -54,7 +53,7 @@
             var windowHalfX = window.innerWidth / 2;
             var windowHalfY = window.innerHeight / 2;
 
-            var pressure = 1.0;
+            var pressure = 2.0;
             var E = 10.0;
             var step = 0.01;
             var inflating = false;
@@ -76,14 +75,14 @@
 
                 scene = new THREE.Scene();
 
-                var ambient = new THREE.AmbientLight( 0x101030 );
+                var ambient = new THREE.AmbientLight( 0x666666 );
                 scene.add( ambient );
 
-                var directionalLight1 = new THREE.DirectionalLight( 0xffeedd );
+                var directionalLight1 = new THREE.DirectionalLight( 0xffffff );
                 directionalLight1.position.set( 1, -1, -0.3 );
                 scene.add( directionalLight1 );
 
-                var directionalLight2 = new THREE.DirectionalLight( 0xffeedd );
+                var directionalLight2 = new THREE.DirectionalLight( 0xffffff );
                 directionalLight1.position.set( 1, -1, 0.3 );
                 scene.add( directionalLight2 );
                 
@@ -115,9 +114,11 @@
                 //
 
                 renderer = new THREE.WebGLRenderer();
+                renderer.setClearColor( 0xffffff, 1 );
                 renderer.setPixelRatio( window.devicePixelRatio );
                 renderer.setSize( window.innerWidth, window.innerHeight );
-                container.appendChild( renderer.domElement );               
+                container.appendChild( renderer.domElement );
+
 
                 //
 
@@ -258,6 +259,10 @@
             renderer.render( scene, camera );
 
         }
+
+        $('div[source]').each(function(index){
+            $(this).load($(this).attr('source'));
+        });
 
         </script>       
 
