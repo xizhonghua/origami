@@ -72,6 +72,34 @@ THREE.Face3.prototype.area = function(g) {
     return area;
 }
 
+// normalize the geometry to center at 0,0,0 and has unit sphere
+THREE.Geometry.prototype.normalize = function() {
+    this.computeBoundingSphere();
+
+    var COM = this.boundingSphere.center;
+    var R = this.boundingSphere.radius;
+
+    console.log('COM = ({0},{1},{2}) R = {3}'.format(COM.x, COM.y, COM.z, R));
+
+    var s = 1.0 / R;
+
+    var m = new THREE.Matrix4().set(
+        s, 0, 0, -s*COM.x,
+        0, s, 0, -s*COM.y,
+        0, 0, s, -s*COM.z,
+        0, 0, 0, 1);                
+
+    this.applyMatrix(m);
+
+    COM = this.boundingSphere.center;
+    R = this.boundingSphere.radius;
+
+    console.log('COM = ({0},{1},{2}) R = {3}'.format(COM.x, COM.y, COM.z, R));
+
+
+    return this;
+}
+
 // set the current array a linear blend of a->b by given percentage
 // a and b should have the same length
 Array.prototype.linearBlend = function(a, b, percentage) {

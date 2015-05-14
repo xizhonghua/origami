@@ -1,165 +1,178 @@
 
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<title>three.js webgl - loaders - OBJ loader</title>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-		<style>
-			body {
-				font-family: Monospace;
-				background-color: #000;
-				color: #fff;
-				margin: 0px;
-				overflow: hidden;
-			}
-			#info {
-				color: #fff;
-				position: absolute;
-				top: 10px;
-				width: 100%;
-				text-align: center;
-				z-index: 100;
-				display:block;
-			}
-			#info a, .button { color: #f00; font-weight: bold; text-decoration: underline; cursor: pointer }
-		</style>
-	</head>
+    <head>
+        <title>three.js webgl - loaders - OBJ loader</title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+        <style>
+            body {
+                font-family: Monospace;
+                background-color: #000;
+                color: #fff;
+                margin: 0px;
+                overflow: hidden;
+            }
+            #info {
+                color: #fff;
+                position: absolute;
+                top: 10px;
+                width: 100%;
+                text-align: center;
+                z-index: 100;
+                display:block;
+            }
+            #info a, .button { color: #f00; font-weight: bold; text-decoration: underline; cursor: pointer }
+        </style>
+    </head>
 
-	<body>
-		<div id="info">
-			Mesh Inflating
-		</div>
+    <body>
+        <div id="info">
+            Mesh Inflating
+        </div>
 
-		<script src="http://threejs.org/build/three.min.js"></script>
-		<script src="http://threejs.org/examples/js/loaders/OBJLoader.js"></script>
-		<script src="http://threejs.org/examples/js/controls/TrackballControls.js"></script>
-		<script src='https://code.jquery.com/jquery-2.1.3.min.js'></script>
-		<script src="js/OBJLoader.js"></script>
-		<script src="js/extension.js"></script>
-		<script src="js/inflate.js"></script>
+        <script src="http://threejs.org/build/three.min.js"></script>
+        <script src="http://threejs.org/examples/js/loaders/OBJLoader.js"></script>
+        <script src="http://threejs.org/examples/js/controls/TrackballControls.js"></script>
+        <script src='https://code.jquery.com/jquery-2.1.3.min.js'></script>
+        <script src="js/OBJLoader.js"></script>
+        <script src="js/extension.js"></script>
+        <script src="js/inflate.js"></script>
 
-		<script>
+        <script>
 
-			var container;
+            var container;
 
-			var camera, scene, renderer;
+            var camera, scene, renderer;
 
-			var controls;
+            var controls;
 
-			var object;
-			var mesh;
-			var org_geometry;			
+            var object;
+            var mesh;
+            var org_geometry;           
 
-			var windowHalfX = window.innerWidth / 2;
-			var windowHalfY = window.innerHeight / 2;
+            var windowHalfX = window.innerWidth / 2;
+            var windowHalfY = window.innerHeight / 2;
 
-			var pressure = 1.0;
-			var E = 10.0;
-			var step = 0.0005;
-			var inflating = false;
-
-
-			init();
-			animate();
+            var pressure = 1.0;
+            var E = 10.0;
+            var step = 0.01;
+            var inflating = false;
 
 
-			function init() {
+            init();
+            animate();
 
-				container = document.createElement( 'div' );
-				document.body.appendChild( container );
 
-				// camera
-				camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
-				camera.position.z = 30;
+            function init() {
 
-				// control
-				controls = new THREE.TrackballControls( camera );
+                container = document.createElement( 'div' );
+                document.body.appendChild( container );
 
-				controls.rotateSpeed = 5.0;
-				controls.zoomSpeed = 1.5;
-				controls.panSpeed = 0.8;
+                // camera
+                camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.01, 2000 );                
 
-				controls.noZoom = false;
-				controls.noPan = false;
+                // scene
 
-				controls.staticMoving = true;
-				controls.dynamicDampingFactor = 0.3;
+                scene = new THREE.Scene();
 
-				controls.keys = [ 65, 83, 68 ];
+                var ambient = new THREE.AmbientLight( 0x101030 );
+                scene.add( ambient );
 
-				controls.addEventListener( 'change', render );
+                var directionalLight1 = new THREE.DirectionalLight( 0xffeedd );
+                directionalLight1.position.set( 1, -1, -0.3 );
+                scene.add( directionalLight1 );
 
-				// scene
+                var directionalLight2 = new THREE.DirectionalLight( 0xffeedd );
+                directionalLight1.position.set( 1, -1, 0.3 );
+                scene.add( directionalLight2 );
+                
 
-				scene = new THREE.Scene();
+                var manager = new THREE.LoadingManager();
+                manager.onProgress = function ( item, loaded, total ) {
 
-				var ambient = new THREE.AmbientLight( 0x101030 );
-				scene.add( ambient );
+                    console.log( item, loaded, total );
 
-				var directionalLight1 = new THREE.DirectionalLight( 0xffeedd );
-				directionalLight1.position.set( 1, -1, -0.3 );
-				scene.add( directionalLight1 );
+                };
 
-				var directionalLight2 = new THREE.DirectionalLight( 0xffeedd );
-				directionalLight1.position.set( 1, -1, 0.3 );
-				scene.add( directionalLight2 );
-				
+                //var texture = new THREE.Texture();
 
-				var manager = new THREE.LoadingManager();
-				manager.onProgress = function ( item, loaded, total ) {
+                var onProgress = function ( xhr ) {
+                    if ( xhr.lengthComputable ) {
+                        var percentComplete = xhr.loaded / xhr.total * 100;
+                        console.log( Math.round(percentComplete, 2) + '% downloaded' );
+                    }
+                };
 
-					console.log( item, loaded, total );
+                var onError = function ( xhr ) {
+                };
 
-				};
+                // model
 
-				//var texture = new THREE.Texture();
+                var loader = new OBJLoader( manager );
+                loader.load( 'models/beethoven.obj', onOBJLoaded, onProgress, onError );
 
-				var onProgress = function ( xhr ) {
-					if ( xhr.lengthComputable ) {
-						var percentComplete = xhr.loaded / xhr.total * 100;
-						console.log( Math.round(percentComplete, 2) + '% downloaded' );
-					}
-				};
+                //
 
-				var onError = function ( xhr ) {
-				};
+                renderer = new THREE.WebGLRenderer();
+                renderer.setPixelRatio( window.devicePixelRatio );
+                renderer.setSize( window.innerWidth, window.innerHeight );
+                container.appendChild( renderer.domElement );               
 
-				// model
+                //
 
-				var loader = new OBJLoader( manager );
-				loader.load( 'models/beethoven.obj', onOBJLoaded, onProgress, onError );
+                window.addEventListener('resize', onWindowResize, false );
+                window.addEventListener('keypress', onWindowKeyPress, false );
 
-				//
+            }
 
-				renderer = new THREE.WebGLRenderer();
-				renderer.setPixelRatio( window.devicePixelRatio );
-				renderer.setSize( window.innerWidth, window.innerHeight );
-				container.appendChild( renderer.domElement );				
-
-				//
-
-				window.addEventListener('resize', onWindowResize, false );
-				window.addEventListener('keypress', onWindowKeyPress, false );
-
-			}
-
-			$("html").on("dragover", function(event) {
+            $("html").on("dragover", function(event) {
             event.preventDefault();  
             event.stopPropagation();
             //$(this).addClass('dragging');
         });
 
-		function onOBJLoaded(obj) {
-			if(object) scene.remove(object);
-			object = obj;
+        function onOBJLoaded(obj) {
+            // clear the scene
+            if(object) scene.remove(object);
+            object = obj;
 
-			scene.add( obj );
+            scene.add( obj );
 
-			mesh = obj.children[0];
+            mesh = obj.children[0];
 
-			org_geometry = mesh.geometry.clone();
-		}
+            mesh.geometry.normalize();
+
+            org_geometry = mesh.geometry.clone();
+
+            org_geometry.computeBoundingSphere();
+
+            resetCamera();
+        }
+
+        function resetCamera() {            
+
+            camera.position.z = 3.0;
+
+            if(controls) controls.removeEventListener( 'change', render );
+
+            // control
+            controls = new THREE.TrackballControls( camera );
+
+            controls.rotateSpeed = 5.0;
+            controls.zoomSpeed = 1.5;
+            controls.panSpeed = 0.8;
+
+            controls.noZoom = false;
+            controls.noPan = false;
+
+            controls.staticMoving = true;
+            controls.dynamicDampingFactor = 0.3;
+
+            controls.keys = [ 65, 83, 68 ];
+
+            controls.addEventListener( 'change', render );
+        }
 
         $("html").on("dragleave", function(event) {
             event.preventDefault();  
@@ -178,75 +191,75 @@
             
             if(!file.name.endsWith('.obj')) return;            
             
-            var reader = new FileReader();		    
+            var reader = new FileReader();          
 
-		    reader.onload = function(e) {
-		        var text = reader.result;
-		        var loader = new OBJLoader();
-		        var object = loader.parse(text);
-		        onOBJLoaded(object);
-		    }
+            reader.onload = function(e) {
+                var text = reader.result;
+                var loader = new OBJLoader();
+                var object = loader.parse(text);
+                onOBJLoaded(object);
+            }
 
-		    reader.readAsText(file, 'UTF-8');
+            reader.readAsText(file, 'UTF-8');
             
-	        
+            
         });
 
-			function onWindowResize() {
+        function onWindowResize() {
 
-				windowHalfX = window.innerWidth / 2;
-				windowHalfY = window.innerHeight / 2;
+            windowHalfX = window.innerWidth / 2;
+            windowHalfY = window.innerHeight / 2;
 
-				camera.aspect = window.innerWidth / window.innerHeight;
-				camera.updateProjectionMatrix();
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
 
-				renderer.setSize( window.innerWidth, window.innerHeight );
+            renderer.setSize( window.innerWidth, window.innerHeight );
 
-			}
+        }
 
-			function onWindowKeyPress(e) {
-				switch(e.keyCode)
-				{
-					// 'R': reset geometry
-					case 114:					
-						mesh.geometry = org_geometry.clone();
-						break;
-					// 'space': toogle inflating mesh
-					case 32:
-						inflating = !inflating
-						break;
-				}
+        function onWindowKeyPress(e) {
+            switch(e.keyCode)
+            {
+                // 'R': reset geometry
+                case 114:                   
+                    mesh.geometry = org_geometry.clone();
+                    break;
+                // 'space': toogle inflating mesh
+                case 32:
+                    inflating = !inflating
+                    break;
+            }
 
-			}
+        }
 
-			function updateInfalting() {
-				var out = inflate(org_geometry, mesh.geometry, pressure, E, step);
-				mesh.geometry = out;
+        function updateInfalting() {
+            var out = inflate(org_geometry, mesh.geometry, pressure, E, step);
+            mesh.geometry = out;
 
-				mesh.geometry.computeFaceNormals ();
-	            //mesh.geometry.computeVertexNormals ();
-	            mesh.geometry.verticesNeedUpdate = true;
-	            mesh.geometry.elementsNeedUpdate = true;
-	            mesh.geometry.normalsNeedUpdate = true;
-			}
-			
+            mesh.geometry.computeFaceNormals ();
+            //mesh.geometry.computeVertexNormals ();
+            mesh.geometry.verticesNeedUpdate = true;
+            mesh.geometry.elementsNeedUpdate = true;
+            mesh.geometry.normalsNeedUpdate = true;
+        }
+        
 
-			function animate() {
+        function animate() {
 
-				requestAnimationFrame( animate );
+            requestAnimationFrame( animate );
 
-				if(inflating) updateInfalting();
-				controls.update();				
-				render();
-			}
+            if(inflating) updateInfalting();
+            if(controls) controls.update();              
+            render();
+        }
 
-			function render() {				
+        function render() {             
 
-				renderer.render( scene, camera );
+            renderer.render( scene, camera );
 
-			}
+        }
 
-		</script>		
+        </script>       
 
-	</body>
+    </body>
 </html>
