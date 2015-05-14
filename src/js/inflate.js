@@ -44,25 +44,49 @@ function inflate(org, cur, p, E, step) {
 		}
 	}
 
-	// apply forces
-	var out = cur.clone();
+	// apply forces	
 	var sum_moved = 0;
 
 	for(var i=0;i<forces.length;++i) {
-		var v = out.vertices[i];
+		var v = cur.vertices[i];
 		var force = forces[i].clone();
 		var displacement = force.multiplyScalar(step);
 		sum_moved += displacement.length();
 		v.add(displacement);
 	}
 
-	console.log('total displacement = ' + sum_moved);
-
-	return out;
+	console.log('total displacement = ' + sum_moved + ' hyperbolic vertices = ' + measure_hyperbolic(cur));	
 }
 
 // measure the number of hyperbolic vertices in the mesh
 function measure_hyperbolic(g)  {
-	//TODO
-	console.log('haha');
+	var angles = [];
+	var count = 0;
+
+	// init sum of angles
+	for(var i=0;i<g.vertices.length;++i)
+		angles.push(0);
+
+	// compute forces by elastic deformation
+	for(var i=0;i<g.faces.length;++i) {
+		var face = g.faces[i];					
+		
+		var e1 = g.vertices[face.b].clone().sub(g.vertices[face.a]).length();
+    	var e2 = g.vertices[face.c].clone().sub(g.vertices[face.b]).length();
+    	var e3 = g.vertices[face.a].clone().sub(g.vertices[face.c]).length();
+
+    	var angle1 = Math.acos((e1*e1 + e3*e3 - e2*e2) / 2 / e1 / e3);
+    	var angle2 = Math.acos((e1*e1 + e2*e2 - e3*e3) / 2 / e1 / e2);
+    	var angle3 = Math.acos((e2*e2 + e3*e3 - e1*e1) / 2 / e2 / e3);
+
+    	angles[face.a] += angle1;
+    	angles[face.b] += angle2;
+    	angles[face.c] += angle3;
+	}
+
+	for(var i=0;i<angles.length;++i) {
+		if(angles[i]>Math.PI*2) count++;
+	}
+
+	return count;
 }

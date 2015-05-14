@@ -113,7 +113,7 @@
 
                 //
 
-                renderer = new THREE.WebGLRenderer();
+                renderer = new THREE.WebGLRenderer({ antialias: true });
                 renderer.setClearColor( 0xffffff, 1 );
                 renderer.setPixelRatio( window.devicePixelRatio );
                 renderer.setSize( window.innerWidth, window.innerHeight );
@@ -234,8 +234,7 @@
         }
 
         function updateInfalting() {
-            var out = inflate(org_geometry, mesh.geometry, pressure, E, step);
-            mesh.geometry = out;
+            inflate(org_geometry, mesh.geometry, pressure, E, step);            
 
             mesh.geometry.computeFaceNormals ();
             //mesh.geometry.computeVertexNormals ();
