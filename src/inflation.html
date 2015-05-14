@@ -28,7 +28,8 @@
     <body>
         <div id="info">
             <div>Mesh Inflation</div>
-            <div> Drop OBJ file onto the canvas | Press space to inflate</div>            
+            <div> Drop OBJ file onto the canvas | Press space to inflate</div>
+            <div id="msg"></div>
         </div>
         <div id="copyright" source="copyright.html">
 
@@ -53,7 +54,8 @@
 
             var object;
             var mesh;
-            var org_geometry;           
+            var org_geometry;
+            var showColor = false;
 
             var windowHalfX = window.innerWidth / 2;
             var windowHalfY = window.innerHeight / 2;
@@ -61,7 +63,7 @@
             var effectController = {
                 pressure: 2.0,
                 E: 10.0,
-                step: 1.5               
+                step: 1.5
             };
           
             var inflating = false;
@@ -95,8 +97,6 @@
                 scene.add( directionalLight2 );
 
                 var gui = new dat.GUI();
-
-
                 
 
                 var valuesChanger = function() {                    
@@ -248,11 +248,16 @@
         }
 
         function onWindowKeyPress(e) {
+            console.log(e);
             switch(e.keyCode)
             {
                 // 'R': reset geometry
                 case 114:                   
                     resetGeometry();
+                    break;
+                // 'C': show color
+                case 99:
+                    showColor = true;
                     break;
                 // 'space': toogle inflating mesh
                 case 32:
@@ -263,13 +268,46 @@
         }
 
         function updateInfalting() {
-            inflate(org_geometry, mesh.geometry, effectController.pressure, effectController.E, Math.log(effectController.step)/100);            
+            inflate(org_geometry, mesh.geometry, effectController.pressure, effectController.E, Math.log(effectController.step)/100);
+
+            
 
             mesh.geometry.computeFaceNormals ();
             //mesh.geometry.computeVertexNormals ();
             mesh.geometry.verticesNeedUpdate = true;
             mesh.geometry.elementsNeedUpdate = true;
             mesh.geometry.normalsNeedUpdate = true;
+        }
+
+        function updateColor() {
+            var cur = mesh.geometry;
+            // measure
+            var result = measure_hyperbolic(cur);
+            var angles = result[0];
+
+            //console.log('hyperbolic vertices = ' + result[1]);
+
+            $('#msg').html('hyperbolic vertices = ' + result[1]);
+
+            // assign color based on angle...
+            if(showColor)
+            {
+                for(var i=0;i<cur.faces.length;++i)
+                {
+                    var face = cur.faces[i];
+                    var vids = [face.a, face.b, face.c];
+                    for(var j=0;j<3;j++) {
+                        var diff = angles[vids[j]] - 2*Math.PI;
+                        var g = diff > 0 ? (diff / (Math.PI / 2)) : 1.0; // diff > 0, red, saturated at 2.5 PI
+                        if(g>1.0) g  = 1.0;
+                        var b = 1.0;
+                        var r = 1.0;
+                        face.vertexColors[j] = new THREE.Color(r, g, b);
+                    }
+                }
+
+                cur.colorsNeedUpdate = true;
+            }
         }
         
 
@@ -278,7 +316,8 @@
             requestAnimationFrame( animate );
 
             if(inflating) updateInfalting();
-            if(controls) controls.update();                          
+            if(controls) controls.update();
+            if(showColor) updateColor();
 
             render();
         }

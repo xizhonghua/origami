@@ -167,9 +167,11 @@ OBJLoader.prototype = {
             object = objects[ i ];                     
 
             material = new THREE.MeshPhongMaterial({
-                 color: 0x996633, 
-            specular: 0x050505,
-            shininess: 50});
+                color: 0x996633, 
+                specular: 0x050505,
+                shininess: 50,
+                vertexColors: THREE.VertexColors
+            });
             material.name = object.material.name;
 
             object.geometry.computeFaceNormals ();
