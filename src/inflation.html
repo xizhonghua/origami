@@ -53,7 +53,7 @@
             var controls, stats;
 
             var object;
-            var mesh;
+            var mesh, wire;
             var org_geometry;
             var showColor = false;
 
@@ -63,7 +63,8 @@
             var effectController = {
                 pressure: 2.0,
                 E: 10.0,
-                step: 1.5
+                step: 1.5,
+                stiffRatio: 1.0
             };
           
             var inflating = false;
@@ -107,6 +108,7 @@
                 gui.add( effectController, "pressure", 1.0, 10.0, 1.0 ).onChange( valuesChanger );
                 gui.add( effectController, "E", 1.0, 100, 1.0 ).onChange( valuesChanger );
                 gui.add( effectController, "step", 1.1, 10, 0.1 ).onChange( valuesChanger );
+                gui.add( effectController, "stiffRatio", 1, 2.0, 0.01 ).onChange( valuesChanger );
               //  gui.close();
 
               
@@ -134,7 +136,7 @@
                 // model
 
                 var loader = new OBJLoader( manager );
-                loader.load( 'models/beethoven.obj', onOBJLoaded, onProgress, onError );
+                loader.load( 'models/table.obj', onOBJLoaded, onProgress, onError );
 
                 //
 
@@ -166,6 +168,7 @@
             scene.add( obj );
 
             mesh = obj.children[0];
+            wire = obj.children[1];
 
             mesh.geometry.normalize();
 
@@ -244,7 +247,11 @@
         }
 
         function resetGeometry() {
+            if(!mesh) return;
+
+            mesh.geometry.dispose();
             mesh.geometry = org_geometry.clone();
+            wire.geometry = mesh.geometry;                        
         }
 
         function onWindowKeyPress(e) {
@@ -268,7 +275,7 @@
         }
 
         function updateInfalting() {
-            inflate(org_geometry, mesh.geometry, effectController.pressure, effectController.E, Math.log(effectController.step)/100);
+            inflate(org_geometry, mesh.geometry, effectController.pressure, effectController.E, Math.log(effectController.step)/100, effectController.stiffRatio);
 
             
 

@@ -180,10 +180,21 @@ OBJLoader.prototype = {
             object.geometry.elementsNeedUpdate = true;
             object.geometry.normalsNeedUpdate = true;
 
+
+            var wireframeMaterial = new THREE.MeshBasicMaterial({
+                color: 0x000000, 
+                wireframe: true, 
+                wireframeLinewidth: 0.1
+            });
+
             var mesh = new THREE.Mesh( object.geometry, material );
             mesh.name = object.name;
 
+            var wireframe = new THREE.Mesh( object.geometry, wireframeMaterial);
+            wireframe.name = object.name + '_wireframe';
+
             container.add( mesh );
+            container.add( wireframe );
 
         }
 
