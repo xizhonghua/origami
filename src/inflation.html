@@ -334,6 +334,8 @@
 
             requestAnimationFrame( animate );
 
+            if(!mesh) return;
+
             if(inflating) updateInfalting();
             if(controls) controls.update();
             updateColor();
