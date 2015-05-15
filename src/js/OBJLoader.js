@@ -190,7 +190,7 @@ OBJLoader.prototype = {
             var mesh = new THREE.Mesh( object.geometry, material );
             mesh.name = object.name;
 
-            var wire = new THREE.Mesh( object.geometry, wireframeMaterial);
+            var wire = new THREE.Mesh( object.geometry.clone(), wireframeMaterial);
             wire.name = object.name + '_wireframe';
 
             container.add( mesh );

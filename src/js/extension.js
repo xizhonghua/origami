@@ -81,13 +81,13 @@ THREE.Geometry.prototype.normalize = function() {
 
     console.log('COM = ({0},{1},{2}) R = {3}'.format(COM.x, COM.y, COM.z, R));
 
-    var s = 1.0 / R;
+    var s = (R === 0 ? 1 : 1.0 / R);
 
     var m = new THREE.Matrix4().set(
         s, 0, 0, -s*COM.x,
         0, s, 0, -s*COM.y,
         0, 0, s, -s*COM.z,
-        0, 0, 0, 1);                
+        0, 0, 0, 1);
 
     this.applyMatrix(m);
 

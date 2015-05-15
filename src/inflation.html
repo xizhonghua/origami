@@ -171,6 +171,7 @@
             wire = obj.children[1];
 
             mesh.geometry.normalize();
+            wire.geometry.normalize();
 
             org_geometry = mesh.geometry.clone();
 
@@ -250,8 +251,9 @@
             if(!mesh) return;
 
             mesh.geometry.dispose();
+            wire.geometry.dispose();
             mesh.geometry = org_geometry.clone();
-            wire.geometry = mesh.geometry;                        
+            wire.geometry = org_geometry.clone();
         }
 
         function onWindowKeyPress(e) {
@@ -264,7 +266,7 @@
                     break;
                 // 'C': show color
                 case 99:
-                    showColor = true;
+                    showColor = !showColor;
                     break;
                 // 'space': toogle inflating mesh
                 case 32:
@@ -277,28 +279,25 @@
         function updateInfalting() {
             inflate(org_geometry, mesh.geometry, effectController.pressure, effectController.E, Math.log(effectController.step)/100, effectController.stiffRatio);
 
-            
-
             mesh.geometry.computeFaceNormals ();
             //mesh.geometry.computeVertexNormals ();
             mesh.geometry.verticesNeedUpdate = true;
             mesh.geometry.elementsNeedUpdate = true;
             mesh.geometry.normalsNeedUpdate = true;
+
+            wire.geometry = mesh.geometry.clone();
         }
 
         function updateColor() {
             var cur = mesh.geometry;
             // measure
             var result = measure_hyperbolic(cur);
-            var angles = result[0];
-
-            //console.log('hyperbolic vertices = ' + result[1]);
-
-            $('#msg').html('hyperbolic vertices = ' + result[1]);
+            var angles = result[0];            
 
             // assign color based on angle...
             if(showColor)
             {
+                $('#msg').show().html('hyperbolic vertices = ' + result[1]);
                 for(var i=0;i<cur.faces.length;++i)
                 {
                     var face = cur.faces[i];
@@ -314,6 +313,19 @@
                 }
 
                 cur.colorsNeedUpdate = true;
+            } else {
+                $('#msg').hide();
+
+                for(var i=0;i<cur.faces.length;++i)
+                {
+                    var face = cur.faces[i];
+                    var vids = [face.a, face.b, face.c];
+                    for(var j=0;j<3;j++) {                        
+                        face.vertexColors[j] = new THREE.Color(1, 1, 1);
+                    }
+                }
+
+                cur.colorsNeedUpdate = true;
             }
         }
         
@@ -324,7 +336,7 @@
 
             if(inflating) updateInfalting();
             if(controls) controls.update();
-            if(showColor) updateColor();
+            updateColor();
 
             render();
         }
