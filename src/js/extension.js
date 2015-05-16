@@ -84,12 +84,13 @@ THREE.Geometry.prototype.normalize = function() {
     var s = (R === 0 ? 1 : 1.0 / R);
 
     var m = new THREE.Matrix4().set(
-        s, 0, 0, -s*COM.x,
-        0, s, 0, -s*COM.y,
-        0, 0, s, -s*COM.z,
-        0, 0, 0, 1);
+        s, 0, 0, -s * COM.x,
+        0, s, 0, -s * COM.y,
+        0, 0, s, -s * COM.z,
+        0, 0, 0, 1 );
 
-    this.applyMatrix(m);
+    this.applyMatrix( m );
+
 
     COM = this.boundingSphere.center;
     R = this.boundingSphere.radius;
