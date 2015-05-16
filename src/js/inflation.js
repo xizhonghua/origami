@@ -9,6 +9,10 @@ function inflate(org, cur, p, E, step, stiffRatio) {
 	// forces vector
 	var forces = [];
 	var angles = measure_hyperbolic(cur)[0];
+	var folding_angles = measure_folding_angles(cur);
+	var concave_edges = folding_angles.count(function(obj){return obj.folding_angle<0;});
+
+	console.log('concave_edges = ' + concave_edges);
 	
 	// init forces
 	for(var i=0;i<cur.vertices.length;++i) {
@@ -83,6 +87,8 @@ function inflate(org, cur, p, E, step, stiffRatio) {
 	}
 
 	console.log('total displacement = ' + sum_moved);
+
+	return sum_moved;
 }
 
 // measure the number of hyperbolic vertices in the mesh
@@ -116,4 +122,68 @@ function measure_hyperbolic(g)  {
 	}
 
 	return [angles, count];
+}
+
+// measure the folding angle for each edge
+// return [{vid1, vid2, folding_angle}]
+function measure_folding_angles(g) {
+	var folding_angles = [];
+	var edges = {};	
+	var eid = 0;
+
+	for(var i=0;i<g.faces.length;++i) {
+		var face = g.faces[i];
+
+		var vids = [face.a, face.b, face.c];
+
+		for(var j=1;j<=3;++j) {
+			var vid1 = vids[j-1];
+			var vid2 = vids[j%3];
+			var min_vid = Math.min(vids[j%3], vids[j-1]);
+			var max_vid = Math.max(vids[j%3], vids[j-1]);
+			var key = min_vid + '_' + max_vid;
+
+			// folding edge shared by tow faces
+			if (key in edges) {
+				var edge = edges[key];
+				edge.fids.push(i);
+
+				// get two faces
+				var f1 = g.faces[edge.fids[0]];
+				var f2 = g.faces[edge.fids[1]];
+
+				var dot = f1.normal.dot(f2.normal);
+
+				var folding_angle = 0.0;				
+				if(Math.abs(dot) < 1e-6) {
+					// flat, do nothing	
+				} else {
+					folding_angle = Math.acos(dot);
+
+					var cp = f1.normal.clone().cross(f2.normal);
+
+					var sign = cp.clone().dot(edge.dir) > 0;
+
+					if(!sign) folding_angle *= -1;
+				}
+
+				folding_angles[edge.eid] = {
+						vid1: edge.vid1,
+						vid2: edge.vid2,
+						folding_angle : folding_angle
+				};
+
+			} else {
+				edges[key] = {
+					vid1 : vid1,
+					vid2 : vid2,
+					dir  : g.vertices[vid2].clone().sub(g.vertices[vid1]),
+					eid  : eid++,
+					fids : [i]
+				};
+			}
+		}
+	}
+
+	return folding_angles;
 }
