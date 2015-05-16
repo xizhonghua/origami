@@ -55,15 +55,15 @@
             var object;
             var mesh, wire;
             var org_geometry;
-            var showColor = false;
+            var showColor = true;
 
             var windowHalfX = window.innerWidth / 2;
             var windowHalfY = window.innerHeight / 2;
 
             var effectController = {
-                pressure: 2.0,
-                E: 10.0,
-                step: 1.5,
+                pressure: 1.5,
+                E: 3.0,
+                step: 1.1,
                 stiffRatio: 1.0
             };
           
@@ -136,7 +136,7 @@
                 // model
 
                 var loader = new OBJLoader( manager );
-                loader.load( 'models/table.obj', onOBJLoaded, onProgress, onError );
+                loader.load( 'models/sphere-deformed-5.obj', onOBJLoaded, onProgress, onError );
 
                 //
 
@@ -277,7 +277,7 @@
         }
 
         function updateInfalting() {
-            inflate(org_geometry, mesh.geometry, effectController.pressure, effectController.E, Math.log(effectController.step)/100, effectController.stiffRatio);
+            var moved = inflate(org_geometry, mesh.geometry, effectController.pressure, effectController.E, Math.log(effectController.step)/100, effectController.stiffRatio);
 
             mesh.geometry.computeFaceNormals ();
             //mesh.geometry.computeVertexNormals ();
@@ -286,18 +286,25 @@
             mesh.geometry.normalsNeedUpdate = true;
 
             wire.geometry = mesh.geometry.clone();
+
+            if(moved<1e-3) {                
+                inflating = false;
+                console.log('inflating stopped!');
+            }
         }
 
         function updateColor() {
             var cur = mesh.geometry;
             // measure
             var result = measure_hyperbolic(cur);
-            var angles = result[0];            
+            var angles = result[0];
+            var folding_angles = measure_folding_angles(cur);
+            var concave_edges = folding_angles.count(function(obj){return obj.folding_angle<0;});
 
             // assign color based on angle...
             if(showColor)
             {
-                $('#msg').show().html('hyperbolic vertices = ' + result[1]);
+                $('#msg').show().html('hyperbolic vertices = {0} concave edges = {1}'.format(result[1], concave_edges));
                 for(var i=0;i<cur.faces.length;++i)
                 {
                     var face = cur.faces[i];
