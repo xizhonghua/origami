@@ -33,13 +33,15 @@
         </div>
         <div id="copyright" source="copyright.html">
 
+
         <script src="http://threejs.org/build/three.min.js"></script>
+
         <script src="http://threejs.org/examples/js/loaders/OBJLoader.js"></script>
         <script src="http://threejs.org/examples/js/controls/TrackballControls.js"></script>
         <script src="http://threejs.org/examples/js/libs/stats.min.js"></script>
         <script src="http://threejs.org/examples/js/libs/dat.gui.min.js"></script>
         <script src='https://code.jquery.com/jquery-2.1.3.min.js'></script>
-
+        <script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
         <script src="js/OBJLoader.js"></script>
         <script src="js/extension.js"></script>
         <script src="js/inflation.js"></script>
@@ -276,7 +278,7 @@
 
         }
 
-        $('window').bind('doubletap', function(event){
+        $(renderer.domElement).bind('tap', function(event){
             inflating = !inflating;
         });
 
