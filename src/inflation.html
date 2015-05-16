@@ -276,6 +276,10 @@
 
         }
 
+        $('window').bind('doubletap', function(event){
+            inflating = !inflating;
+        });
+
         function updateInfalting() {
             var moved = inflate(org_geometry, mesh.geometry, effectController.pressure, effectController.E, Math.log(effectController.step)/100, effectController.stiffRatio);
 
