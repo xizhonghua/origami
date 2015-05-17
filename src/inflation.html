@@ -82,7 +82,8 @@
                 pressure: 0.2,
                 E: 5.0,
                 step: 1.2,
-                stiffRatio: 50
+                stiffRatio: 50,
+                concave_threshold: 90
             };
             
             var showColor = true;
@@ -106,6 +107,7 @@
                 gui.add( effectController, "E", 1.0, 100, 1.0 ).onChange( valuesChanger );
                 gui.add( effectController, "step", 1.0, 2.0, 0.1 ).onChange( valuesChanger );
                 gui.add( effectController, "stiffRatio", 1.0, 100.0, 0.1 ).onChange( valuesChanger );
+                gui.add( effectController, "concave_threshold", 1, 180, 1.0).onChange( valuesChanger );
                 //  gui.close();
             }
 
@@ -308,7 +310,8 @@
                 effectController.pressure, 
                 effectController.E, 
                 Math.log(effectController.step+0.1)/1000, 
-                constrained ? effectController.stiffRatio : 1.0);
+                constrained ? effectController.stiffRatio : 1.0,
+                effectController.concave_threshold/180.0 * Math.PI);
 
             mesh.geometry.computeFaceNormals ();
             //mesh.geometry.computeVertexNormals ();
@@ -411,16 +414,16 @@
             $(this).blur();
             resetGeometry();
             console.log('constrained = ' + constrained);
-        });
+        });        
 
-        function exportOBJHandler(e) {
-            var OBJ = mesh.geometry.toOBJ();
-            
+        $('#btn-export-obj').click(function(e){
+            // remove focus
+            $(this).blur();
+
+            var OBJ = mesh.geometry.toOBJ();            
             var blob = new Blob([OBJ], {type: "text/plain;charset=utf-8"});
-            saveAs(blob, "Inflated.obj");
-        }
-
-        $('#btn-export-obj').click(exportOBJHandler);
+            saveAs(blob, "inflated.obj");
+        });
 
 
         </script>       

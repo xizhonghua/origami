@@ -5,7 +5,8 @@
 // E : Young's modulus
 // step : step for apply the force
 // stiffRatio: ratio between rigid and flexible edges...
-function inflate(org, cur, p, E, step, stiffRatio) {
+// convace_threshold: threshold for deep concave edges which will become stiffer
+function inflate(org, cur, p, E, step, stiffRatio, convace_threshold) {
 	// forces vector
 	var forces = [];
 	var result = measure_section_angles(cur);
@@ -55,9 +56,13 @@ function inflate(org, cur, p, E, step, stiffRatio) {
 			var edge = edges[key];
 
 			var factor = 1.0;
-			// if(angles[es[j%3]] < 2*Math.PI) factor *= stiffRatio;
-			// if(angles[es[j-1]] < 2*Math.PI) factor *= stiffRatio;
+			
+			// convex edges become stiffer
 			if(edge.folding_angle > 0) factor = stiffRatio;
+
+			// deeper concave edges become stiffer
+			if(edge.folding_angle <0 &&
+			   Math.abs(edge.folding_angle) > Math.abs(convace_threshold)) factor = stiffRatio;
 
 
 			var force = cur_e.clone().setLength(Math.abs(delta_l)*E*factor);			
