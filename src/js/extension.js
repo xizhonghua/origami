@@ -124,6 +124,14 @@ Array.prototype.count = function(condition) {
     , 0);
 }
 
+function countIf(obj, condition) {
+    var count = 0;
+    for(var key in obj) {
+        if(condition(obj[key], key)) ++count;
+    }
+    return count;
+}
+
 // First, checks if it isn't implemented yet.
 if (!String.prototype.format) {
   String.prototype.format = function() {

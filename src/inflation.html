@@ -10,15 +10,24 @@
                 background-color: #fff;                
                 margin: 0px;
                 overflow: hidden;
+                font-size: 0.8em;
             }
             #info {
                 position: absolute;
-                top: 10px;
+                top: 4px;
                 width: 100%;
                 text-align: center;
                 z-index: 100;
                 display:block;
                 pointer-events:none;
+            }
+            #options {
+                position: absolute;
+                bottom: 4px;
+                width: 100%;
+                text-align: center;
+                z-index: 101;
+                display: block;                
             }
             #info a, .button { color: #f00; font-weight: bold; text-decoration: underline; cursor: pointer }
         </style>
@@ -30,6 +39,10 @@
             <div>Mesh Inflation</div>
             <div> Drop OBJ file onto the canvas | Press space to inflate</div>
             <div id="msg"></div>
+        </div>
+        <div id="options">
+            <input type="checkbox" id="chk-constrained" />
+            <label for="chk-constrained">Constained</label>
         </div>
         <div id="copyright" source="copyright.html">
 
@@ -57,7 +70,7 @@
             var object;
             var mesh, wire;
             var org_geometry;
-            var showColor = true;
+            
 
             var windowHalfX = window.innerWidth / 2;
             var windowHalfY = window.innerHeight / 2;
@@ -66,10 +79,12 @@
                 pressure: 1.5,
                 E: 3.0,
                 step: 1.1,
-                stiffRatio: 1.0
+                stiffRatio: 5
             };
-          
+            
+            var showColor = true;
             var inflating = false;
+            var constrained = true;
 
 
             init();
@@ -109,8 +124,8 @@
 
                 gui.add( effectController, "pressure", 1.0, 10.0, 1.0 ).onChange( valuesChanger );
                 gui.add( effectController, "E", 1.0, 100, 1.0 ).onChange( valuesChanger );
-                gui.add( effectController, "step", 1.1, 10, 0.1 ).onChange( valuesChanger );
-                gui.add( effectController, "stiffRatio", 1, 2.0, 0.01 ).onChange( valuesChanger );
+                gui.add( effectController, "step", 1.01, 2, 0.01 ).onChange( valuesChanger );
+                gui.add( effectController, "stiffRatio", 1.0, 100.0, 0.1 ).onChange( valuesChanger );
               //  gui.close();
 
               
@@ -278,12 +293,16 @@
 
         }
 
-        $(renderer.domElement).bind('tap', function(event){
-            inflating = !inflating;
-        });
+       
 
         function updateInfalting() {
-            var moved = inflate(org_geometry, mesh.geometry, effectController.pressure, effectController.E, Math.log(effectController.step)/100, effectController.stiffRatio);
+            var moved = inflate(
+                org_geometry, 
+                mesh.geometry, 
+                effectController.pressure, 
+                effectController.E, 
+                Math.log(effectController.step)/100, 
+                constrained ? effectController.stiffRatio : 1.0);
 
             mesh.geometry.computeFaceNormals ();
             //mesh.geometry.computeVertexNormals ();
@@ -304,13 +323,22 @@
             // measure
             var result = measure_hyperbolic(cur);
             var angles = result[0];
-            var folding_angles = measure_folding_angles(cur);
-            var concave_edges = folding_angles.count(function(obj){return obj.folding_angle<0;});
+            var edges = measure_folding_angles(cur);
+            var concave_edges = countIf(edges, function(obj){
+                return obj.folding_angle<0;
+            });
+
+            mesh.geometry.computeBoundingSphere();
+
+            var radius = mesh.geometry.boundingSphere.radius;
+
+            $('#msg').show().html(
+                (inflating ? 'Inflating...' : 'Inflated') 
+              + ' | hyperbolic vertices = {0} | concave edges = {1} | radius = {2}'.format(result[1], concave_edges, Math.round(radius*1000)/1000));
 
             // assign color based on angle...
             if(showColor)
-            {
-                $('#msg').show().html('hyperbolic vertices = {0} concave edges = {1}'.format(result[1], concave_edges));
+            {                
                 for(var i=0;i<cur.faces.length;++i)
                 {
                     var face = cur.faces[i];
@@ -365,6 +393,20 @@
         $('div[source]').each(function(index){
             $(this).load($(this).attr('source'));
         });
+
+
+        // UI Event
+        $(renderer.domElement).bind('tap', function(event){
+            inflating = !inflating;
+        });
+
+        $('#chk-constrained').prop("checked", constrained).change(function(){
+            constrained = $(this).prop( "checked" );
+            $(this).blur();
+            resetGeometry();
+            console.log('constrained = ' + constrained);
+        });
+
 
         </script>       
 

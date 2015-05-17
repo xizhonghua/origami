@@ -9,8 +9,8 @@ function inflate(org, cur, p, E, step, stiffRatio) {
 	// forces vector
 	var forces = [];
 	var angles = measure_hyperbolic(cur)[0];
-	var folding_angles = measure_folding_angles(cur);
-	var concave_edges = folding_angles.count(function(obj){return obj.folding_angle<0;});
+	var edges = measure_folding_angles(cur);
+	var concave_edges = countIf(edges, function(obj){return obj.folding_angle<0;});
 
 	console.log('concave_edges = ' + concave_edges);
 	
@@ -41,9 +41,18 @@ function inflate(org, cur, p, E, step, stiffRatio) {
 			// only consider streched...
 			if(delta_l<0) continue;
 
+			
+			var vid1 = es[j-1];
+			var vid2 = es[j%3];
+			var min_vid = Math.min(es[j%3], es[j-1]);
+			var max_vid = Math.max(es[j%3], es[j-1]);
+			var key = min_vid + '_' + max_vid;
+			var edge = edges[key];
+
 			var factor = 1.0;
-			if(angles[es[j%3]] < 2*Math.PI) factor *= stiffRatio;
-			if(angles[es[j-1]] < 2*Math.PI) factor *= stiffRatio;
+			// if(angles[es[j%3]] < 2*Math.PI) factor *= stiffRatio;
+			// if(angles[es[j-1]] < 2*Math.PI) factor *= stiffRatio;
+			if(edge.folding_angle > 0) factor = stiffRatio;
 
 
 			var force = cur_e.clone().setLength(Math.abs(delta_l)*E*factor);			
@@ -167,11 +176,7 @@ function measure_folding_angles(g) {
 					if(!sign) folding_angle *= -1;
 				}
 
-				folding_angles[edge.eid] = {
-						vid1: edge.vid1,
-						vid2: edge.vid2,
-						folding_angle : folding_angle
-				};
+				edge.folding_angle = folding_angle;
 
 			} else {
 				edges[key] = {
@@ -185,5 +190,5 @@ function measure_folding_angles(g) {
 		}
 	}
 
-	return folding_angles;
+	return edges;
 }
