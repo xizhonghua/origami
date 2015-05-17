@@ -42,7 +42,9 @@
         </div>
         <div id="options">
             <input type="checkbox" id="chk-constrained" />
-            <label for="chk-constrained">Constained</label>
+            <label for="chk-constrained">Constained</label> 
+            | 
+            <input type='button' id='btn-export-obj' value='Export OBJ...'/>
         </div>
         <div id="copyright" source="copyright.html">
 
@@ -54,10 +56,11 @@
         <script src="http://threejs.org/examples/js/libs/stats.min.js"></script>
         <script src="http://threejs.org/examples/js/libs/dat.gui.min.js"></script>
         <script src='https://code.jquery.com/jquery-2.1.3.min.js'></script>
-        <script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+        <!--<script src="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>-->
         <script src="js/OBJLoader.js"></script>
         <script src="js/extension.js"></script>
         <script src="js/inflation.js"></script>
+        <script src="js/FileSaver.min.js"></script>
 
         <script>
 
@@ -76,10 +79,10 @@
             var windowHalfY = window.innerHeight / 2;
 
             var effectController = {
-                pressure: 0.5,
+                pressure: 0.2,
                 E: 5.0,
                 step: 1.2,
-                stiffRatio: 5
+                stiffRatio: 50
             };
             
             var showColor = true;
@@ -89,6 +92,22 @@
 
             init();
             animate();
+
+            function initGUI() {
+                var gui = new dat.GUI();
+                
+
+                var valuesChanger = function() {                    
+                    //resetGeometry();
+                };                
+
+
+                gui.add( effectController, "pressure", 0.1, 1.0, 0.01 ).onChange( valuesChanger );
+                gui.add( effectController, "E", 1.0, 100, 1.0 ).onChange( valuesChanger );
+                gui.add( effectController, "step", 1.0, 2.0, 0.1 ).onChange( valuesChanger );
+                gui.add( effectController, "stiffRatio", 1.0, 100.0, 0.1 ).onChange( valuesChanger );
+                //  gui.close();
+            }
 
 
             function init() {
@@ -114,21 +133,8 @@
                 directionalLight1.position.set( 1, -1, 0.3 );
                 scene.add( directionalLight2 );
 
-                var gui = new dat.GUI();
-                
-
-                var valuesChanger = function() {                    
-                    //resetGeometry();
-                };                
-
-
-                gui.add( effectController, "pressure", 0.1, 2.0, 0.01 ).onChange( valuesChanger );
-                gui.add( effectController, "E", 1.0, 100, 1.0 ).onChange( valuesChanger );
-                gui.add( effectController, "step", 1.0, 2.0, 0.1 ).onChange( valuesChanger );
-                gui.add( effectController, "stiffRatio", 1.0, 100.0, 0.1 ).onChange( valuesChanger );
-              //  gui.close();
-
-              
+               
+                initGUI();              
                 
 
                 var manager = new THREE.LoadingManager();
@@ -406,6 +412,15 @@
             resetGeometry();
             console.log('constrained = ' + constrained);
         });
+
+        function exportOBJHandler(e) {
+            var OBJ = mesh.geometry.toOBJ();
+            
+            var blob = new Blob([OBJ], {type: "text/plain;charset=utf-8"});
+            saveAs(blob, "Inflated.obj");
+        }
+
+        $('#btn-export-obj').click(exportOBJHandler);
 
 
         </script>       

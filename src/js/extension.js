@@ -101,6 +101,29 @@ THREE.Geometry.prototype.normalize = function() {
     return this;
 }
 
+// convert the geometry in OBJ format
+THREE.Geometry.prototype.toOBJ = function() {
+    var OBJ = '';
+
+    OBJ += '# Exported by Three.js Geometry.toOBJ()\n';
+    OBJ += '# ' + new Date() + '\n\n';
+    
+    // vertices
+    for(var i=0;i<this.vertices.length;++i)
+    {
+        var vertex = this.vertices[i];
+        OBJ += 'v {0} {1} {2}\n'.format(vertex.x, vertex.y, vertex.z);
+    }
+
+    for(var i=0;i<this.faces.length;++i)
+    {
+        var face = this.faces[i];
+        OBJ += 'f {0} {1} {2}\n'.format(face.a+1, face.b+1, face.c+1);
+    }
+
+    return OBJ;
+}
+
 // set the current array a linear blend of a->b by given percentage
 // a and b should have the same length
 Array.prototype.linearBlend = function(a, b, percentage) {
