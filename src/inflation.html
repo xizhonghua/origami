@@ -76,9 +76,9 @@
             var windowHalfY = window.innerHeight / 2;
 
             var effectController = {
-                pressure: 1.5,
-                E: 3.0,
-                step: 1.1,
+                pressure: 0.5,
+                E: 5.0,
+                step: 1.2,
                 stiffRatio: 5
             };
             
@@ -122,10 +122,10 @@
                 };                
 
 
-                gui.add( effectController, "pressure", 1.0, 10.0, 1.0 ).onChange( valuesChanger );
+                gui.add( effectController, "pressure", 0.1, 2.0, 0.01 ).onChange( valuesChanger );
                 gui.add( effectController, "E", 1.0, 100, 1.0 ).onChange( valuesChanger );
-                gui.add( effectController, "step", 1.01, 2, 0.01 ).onChange( valuesChanger );
-                gui.add( effectController, "stiffRatio", 1.0, 100.0, 0.1 ).onChange( valuesChanger );
+                gui.add( effectController, "step", 1.0, 2.0, 0.1 ).onChange( valuesChanger );
+                gui.add( effectController, "stiffRatio", 1.0, 20.0, 0.1 ).onChange( valuesChanger );
               //  gui.close();
 
               
@@ -301,7 +301,7 @@
                 mesh.geometry, 
                 effectController.pressure, 
                 effectController.E, 
-                Math.log(effectController.step)/100, 
+                Math.log(effectController.step+0.1)/1000, 
                 constrained ? effectController.stiffRatio : 1.0);
 
             mesh.geometry.computeFaceNormals ();
@@ -321,8 +321,8 @@
         function updateColor() {
             var cur = mesh.geometry;
             // measure
-            var result = measure_hyperbolic(cur);
-            var angles = result[0];
+            var result = measure_section_angles(cur);
+            var angles = result.sums;
             var edges = measure_folding_angles(cur);
             var concave_edges = countIf(edges, function(obj){
                 return obj.folding_angle<0;
@@ -334,7 +334,7 @@
 
             $('#msg').show().html(
                 (inflating ? 'Inflating...' : 'Inflated') 
-              + ' | hyperbolic vertices = {0} | concave edges = {1} | radius = {2}'.format(result[1], concave_edges, Math.round(radius*1000)/1000));
+              + ' | hyperbolic vertices = {0} | concave edges = {1} | radius = {2}'.format(result.count, concave_edges, Math.round(radius*1000)/1000));
 
             // assign color based on angle...
             if(showColor)

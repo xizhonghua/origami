@@ -4,11 +4,14 @@
 // p : pressure
 // E : Young's modulus
 // step : step for apply the force
-// stiffRatio: ratio between rigid and flexibale edges...
+// stiffRatio: ratio between rigid and flexible edges...
 function inflate(org, cur, p, E, step, stiffRatio) {
 	// forces vector
 	var forces = [];
-	var angles = measure_hyperbolic(cur)[0];
+	var result = measure_section_angles(cur);
+	var section_angles = result.section_angles;
+	var sum_section_angles = result.sums;
+
 	var edges = measure_folding_angles(cur);
 	var concave_edges = countIf(edges, function(obj){return obj.folding_angle<0;});
 
@@ -22,10 +25,12 @@ function inflate(org, cur, p, E, step, stiffRatio) {
 	// compute forces by pressure
 	for(var i=0;i<cur.faces.length;++i) {
 		var face = cur.faces[i];
-		var force = face.normal.clone().multiplyScalar(face.area(cur)*p);
-		forces[face.a].add(force);
-		forces[face.b].add(force);
-		forces[face.c].add(force);
+		//var force = face.normal.clone().multiplyScalar(face.area(cur)*p);
+		//don't times area
+		var force = face.normal.clone().multiplyScalar(p);
+		forces[face.a].add(force.clone().multiplyScalar(section_angles[i][0]/sum_section_angles[face.a]));
+		forces[face.b].add(force.clone().multiplyScalar(section_angles[i][1]/sum_section_angles[face.b]));
+		forces[face.c].add(force.clone().multiplyScalar(section_angles[i][2]/sum_section_angles[face.c]));
 	}
 
 	//	compute forces by elastic deformation
@@ -100,14 +105,15 @@ function inflate(org, cur, p, E, step, stiffRatio) {
 	return sum_moved;
 }
 
-// measure the number of hyperbolic vertices in the mesh
-function measure_hyperbolic(g)  {
-	var angles = [];
+// measure the section of each vertex
+function measure_section_angles(g)  {
+	var sums = [];
+	var section_angles = [];
 	var count = 0;
 
 	// init sum of angles
 	for(var i=0;i<g.vertices.length;++i)
-		angles.push(0);
+		sums.push(0);
 
 	// compute forces by elastic deformation
 	for(var i=0;i<g.faces.length;++i) {
@@ -121,16 +127,24 @@ function measure_hyperbolic(g)  {
     	var angle2 = Math.acos((e1*e1 + e2*e2 - e3*e3) / 2 / e1 / e2);
     	var angle3 = Math.acos((e2*e2 + e3*e3 - e1*e1) / 2 / e2 / e3);
 
-    	angles[face.a] += angle1;
-    	angles[face.b] += angle2;
-    	angles[face.c] += angle3;
+    	sums[face.a] += angle1;
+    	sums[face.b] += angle2;
+    	sums[face.c] += angle3;
+
+    	section_angles.push([angle1, angle2, angle3]);
 	}
 
-	for(var i=0;i<angles.length;++i) {
-		if(angles[i]>Math.PI*2) count++;
+	for(var i=0;i<sums.length;++i) {
+		if(sums[i]>Math.PI*2) count++;
 	}
 
-	return [angles, count];
+	var result =  {
+		sums: sums, 
+		count: count,
+		section_angles: section_angles
+	};
+
+	return result;
 }
 
 // measure the folding angle for each edge
