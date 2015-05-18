@@ -49,9 +49,7 @@
         <div id="copyright" source="copyright.html">
 
 
-        <script src="http://threejs.org/build/three.min.js"></script>
-
-        <script src="http://threejs.org/examples/js/loaders/OBJLoader.js"></script>
+        <script src="js/three.min.js"></script>
         <script src="http://threejs.org/examples/js/controls/TrackballControls.js"></script>
         <script src="http://threejs.org/examples/js/libs/stats.min.js"></script>
         <script src="http://threejs.org/examples/js/libs/dat.gui.min.js"></script>
@@ -80,10 +78,11 @@
 
             var effectController = {
                 pressure: 0.2,
-                E: 5.0,
-                step: 1.2,
-                stiffRatio: 50,
-                concave_threshold: 90
+                E: 2.0,
+                step: 1.2,                
+                stiff_ratio: 10,
+                concave_threshold: 15,
+                v_dis_factor: 1.0
             };
             
             var showColor = true;
@@ -104,10 +103,11 @@
 
 
                 gui.add( effectController, "pressure", 0.1, 1.0, 0.01 ).onChange( valuesChanger );
-                gui.add( effectController, "E", 1.0, 100, 1.0 ).onChange( valuesChanger );
+                gui.add( effectController, "E", 1.0, 5.0, 0.1 ).onChange( valuesChanger );
                 gui.add( effectController, "step", 1.0, 2.0, 0.1 ).onChange( valuesChanger );
-                gui.add( effectController, "stiffRatio", 1.0, 100.0, 0.1 ).onChange( valuesChanger );
+                gui.add( effectController, "stiff_ratio", 1.0, 50.0, 0.1 ).onChange( valuesChanger );
                 gui.add( effectController, "concave_threshold", 1, 180, 1.0).onChange( valuesChanger );
+                gui.add( effectController, "v_dis_factor", 0.1, 2.0, 0.1).onChange( valuesChanger );
                 //  gui.close();
             }
 
@@ -310,8 +310,9 @@
                 effectController.pressure, 
                 effectController.E, 
                 Math.log(effectController.step+0.1)/1000, 
-                constrained ? effectController.stiffRatio : 1.0,
-                effectController.concave_threshold/180.0 * Math.PI);
+                constrained ? effectController.stiff_ratio : 1.0,
+                effectController.concave_threshold/180.0 * Math.PI,
+                constrained ? effectController.v_dis_factor : 0.0 );
 
             mesh.geometry.computeFaceNormals ();
             //mesh.geometry.computeVertexNormals ();

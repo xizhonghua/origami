@@ -147,6 +147,21 @@ Array.prototype.count = function(condition) {
     , 0);
 }
 
+// return the sum of the array
+// >>> [1,2,3,4,5].sum()
+// >>> 15
+// if key is provided, return sum(element[key])
+// >>> [{x:10,y:5}, {x:5,y:7}].sum('x') 
+// >>> 15
+// >>> [{x:10,y:5}, {x:5,y:7}].sum('y')
+// >>> 12
+Array.prototype.sum = function(key) {
+    if(!key)
+        return this.reduce(function(total, x){ return total + x}, 0);
+    else
+        return this.reduce(function(total, x){ return total + x[key]}, 0);
+}
+
 function countIf(obj, condition) {
     var count = 0;
     for(var key in obj) {

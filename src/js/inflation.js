@@ -1,12 +1,30 @@
+var Inflation = Inflation || {};
+
+Inflation.Cache = {};
+
 // inflate the current geometry
 // org : original mesh
 // cur : current mesh
 // p : pressure
 // E : Young's modulus
 // step : step for apply the force
-// stiffRatio: ratio between rigid and flexible edges...
+// stiff_ratio: ratio between rigid and flexible edges...
 // convace_threshold: threshold for deep concave edges which will become stiffer
-function inflate(org, cur, p, E, step, stiffRatio, convace_threshold) {
+// v_dis_factor: vertex displacement factor
+function inflate(org, cur, p, E, step, stiff_ratio, convace_threshold, v_dis_factor) {
+
+	if(Inflation.Cache.uuid !== org.uuid) {
+		// clear the cache and remeasure
+		Inflation.Cache = {
+			// cache key
+			uuid : org.uuid,	
+			// per vertex sum of section angles
+			section_angle_sums: measure_section_angles(org).sums,
+			// edges
+			edges: measure_folding_angles(org)
+		};
+	}
+
 	// forces vector
 	var forces = [];
 	var result = measure_section_angles(cur);
@@ -58,11 +76,11 @@ function inflate(org, cur, p, E, step, stiffRatio, convace_threshold) {
 			var factor = 1.0;
 			
 			// convex edges become stiffer
-			if(edge.folding_angle > 0) factor = stiffRatio;
+			if(edge.folding_angle > 0) factor = stiff_ratio;
 
 			// deeper concave edges become stiffer
 			if(edge.folding_angle <0 &&
-			   Math.abs(edge.folding_angle) > Math.abs(convace_threshold)) factor = stiffRatio;
+			   Math.abs(edge.folding_angle) > Math.abs(convace_threshold)) factor = stiff_ratio;
 
 
 			var force = cur_e.clone().setLength(Math.abs(delta_l)*E*factor);			
@@ -73,25 +91,23 @@ function inflate(org, cur, p, E, step, stiffRatio, convace_threshold) {
 		}
 	}
 
-	// // apply forces by vertex displacement
-	// for(var i=0;i<cur.vertices.length;++i) {
-	// 	var cur_v = cur.vertices[i];				
-	// 	var org_v = org.vertices[i];
-	// 	var delta_v = cur_v.clone().sub(org_v);
-	// 	var delta_l = delta_v.length();
-	// 	// only consider streched...
-	// 	if(delta_l<0) continue;
+	// apply forces by vertex displacement
+	for(var i=0;i<cur.vertices.length;++i) {
+		var cur_v = cur.vertices[i];
+		var org_v = org.vertices[i];
+		var delta_v = cur_v.clone().sub(org_v);
+		var delta_l = delta_v.length();
+		
+		var factor = v_dis_factor;	
+		var concave_edges = edges[i].count(function(folding_angle) { return folding_angle < 0;});
+		// a convex surface, make the vertex stable
+		if(concave_edges == 0) factor *= stiff_ratio;
 
-	// 	var factor = 1.0;
-	// 	if(angles[i] < 2*Math.PI) factor *= stiffRatio;
-	// 	if(angles[i] < 2*Math.PI) factor *= stiffRatio;
+		var force = delta_v.clone().negate().setLength(delta_l*E*factor);
 
-
-	// 	var force = delta_v.clone().negate().setLength(Math.abs(delta_l)*E*factor);			
-
-	// 	// add forces on the vertex
-	// 	forces[i].add(force);		
-	// }
+		// add forces on the vertex
+		forces[i].add(force);		
+	}
 
 
 	// apply forces	
@@ -197,6 +213,11 @@ function measure_folding_angles(g) {
 
 				edge.folding_angle = folding_angle;
 
+				if(!(vid1 in edges)) edges[vid1] = [];
+				if(!(vid2 in edges)) edges[vid2] = [];
+				edges[vid1].push(folding_angle);
+				edges[vid2].push(folding_angle);
+
 			} else {
 				edges[key] = {
 					vid1 : vid1,
@@ -206,6 +227,8 @@ function measure_folding_angles(g) {
 					fids : [i]
 				};
 			}
+
+			
 		}
 	}
 
