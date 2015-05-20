@@ -124,6 +124,11 @@ THREE.Geometry.prototype.toOBJ = function() {
     return OBJ;
 }
 
+THREE.Geometry.prototype.clearVertexNormals = function() {
+    for(var i=0;i<this.faces.length;++i)    
+        this.faces[i].vertexNormals = [];
+}
+
 // set the current array a linear blend of a->b by given percentage
 // a and b should have the same length
 Array.prototype.linearBlend = function(a, b, percentage) {

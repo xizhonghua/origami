@@ -70,11 +70,14 @@
 
             var object;
             var mesh, wire;
-            var org_geometry;
+            var orgGeometry;
             
 
             var windowHalfX = window.innerWidth / 2;
             var windowHalfY = window.innerHeight / 2;
+
+            var inflating = false;
+            var constrained = true;
 
             var effectController = {
                 pressure: 0.5,
@@ -84,10 +87,13 @@
                 concave_threshold: 15,
                 v_dis_factor: 1.0
             };
+
+
             
             var showColor = true;
-            var inflating = false;
-            var constrained = true;
+            var showWire = true;
+            var useVertexNormal = false;
+            
 
 
             init();
@@ -177,12 +183,11 @@
                 window.addEventListener('resize', onWindowResize, false );
                 window.addEventListener('keypress', onWindowKeyPress, false );
 
-            }
+            } // end init
 
-            $("html").on("dragover", function(event) {
+        $("html").on("dragover", function(event) {
             event.preventDefault();  
-            event.stopPropagation();
-            //$(this).addClass('dragging');
+            event.stopPropagation();        
         });
 
         function onOBJLoaded(obj) {
@@ -198,9 +203,9 @@
             mesh.geometry.normalize();
             wire.geometry.normalize();
 
-            org_geometry = mesh.geometry.clone();
+            orgGeometry = mesh.geometry.clone();
 
-            org_geometry.computeBoundingSphere();
+            orgGeometry.computeBoundingSphere();
 
             resetCamera();
         }
@@ -232,7 +237,6 @@
         $("html").on("dragleave", function(event) {
             event.preventDefault();  
             event.stopPropagation();
-            //$(this).removeClass('dragging');
         });
 
         $("html").on("drop", function(event) {
@@ -277,35 +281,76 @@
 
             mesh.geometry.dispose();
             wire.geometry.dispose();
-            mesh.geometry = org_geometry.clone();
-            wire.geometry = org_geometry.clone();
+            mesh.geometry = orgGeometry.clone();
+            wire.geometry = orgGeometry.clone();
+        }
+
+        function updateGeometry() {
+
+            // re-compute everything
+            mesh.geometry.computeFaceNormals ();
+
+            updateVertexNormals();
+
+            mesh.geometry.verticesNeedUpdate = true;
+            mesh.geometry.elementsNeedUpdate = true;
+            
+            
+            if(showWire) {
+                // clone wire
+                wire.geometry = mesh.geometry.clone();
+            }
+        }
+
+        function updateVertexNormals() {
+
+            if(useVertexNormal) {
+                mesh.geometry.computeVertexNormals();
+                mesh.geometry.normalsNeedUpdate = true;
+                mesh.material.shading = THREE.SmoothShading;
+            } else {                
+                mesh.material.shading = THREE.FlatShading;
+            }
+
+            mesh.material.needsUpdate = true
+            
         }
 
         function onWindowKeyPress(e) {
             console.log(e);
             switch(e.keyCode)
             {
-                // 'R': reset geometry
+                // 'r': reset geometry
                 case 114:                   
                     resetGeometry();
                     break;
-                // 'C': show color
+                // 'c': show color
                 case 99:
                     showColor = !showColor;
+                    break;
+                case 118:
+                    useVertexNormal = !useVertexNormal;
+                    updateVertexNormals();
+                    break;
+                // 'w'
+                case 119:
+                    showWire = !showWire;
+                    updateGeometry();
                     break;
                 // 'space': toogle inflating mesh
                 case 32:
                     inflating = !inflating
-                    break;
-            }
-
+                    break;                
+            }            
         }
 
        
 
         function updateInfalting() {
+
+            // inflate the mesh
             var moved = inflate(
-                org_geometry, 
+                orgGeometry, 
                 mesh.geometry, 
                 effectController.pressure, 
                 effectController.E, 
@@ -314,17 +359,11 @@
                 effectController.concave_threshold/180.0 * Math.PI,
                 constrained ? effectController.v_dis_factor : 0.0 );
 
-            mesh.geometry.computeFaceNormals ();
-            //mesh.geometry.computeVertexNormals ();
-            mesh.geometry.verticesNeedUpdate = true;
-            mesh.geometry.elementsNeedUpdate = true;
-            mesh.geometry.normalsNeedUpdate = true;
-
-            wire.geometry = mesh.geometry.clone();
+            updateGeometry();
 
             if(moved<1e-3) {                
                 inflating = false;
-                console.log('inflating stopped!');
+                console.log('Inflation stopped!');
             }
         }
 
@@ -389,6 +428,9 @@
 
             if(inflating) updateInfalting();
             if(controls) controls.update();
+
+            wire.visible = showWire;
+
             updateColor();
 
             render();

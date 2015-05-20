@@ -72,26 +72,21 @@ OBJLoader.prototype = {
             geometry.faces.push( new THREE.Face3( ia, ib, ic ) );            
         }
 
-        // create mesh if no objects in text
+        // only single mesh is supported
 
-        if ( /^o /gm.test( text ) === false ) {
+        geometry = new THREE.Geometry();
 
-            geometry = new THREE.Geometry();
+        material = {
+            name: ''
+        };
 
-            material = {
-                name: ''
-            };
+        object = {
+            name: '',
+            geometry: geometry,
+            material: material
+        };
 
-            object = {
-                name: '',
-                geometry: geometry,
-                material: material
-            };
-
-            objects.push( object );
-
-        }
-
+        objects.push( object );
        
 
         var lines = text.split( '\n' );

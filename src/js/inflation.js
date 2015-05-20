@@ -13,6 +13,8 @@ Inflation.Cache = {};
 // v_dis_factor: vertex displacement factor
 function inflate(org, cur, p, E, step, stiff_ratio, convace_threshold, v_dis_factor) {
 
+	console.time('inflate');
+
 	if(Inflation.Cache.uuid !== org.uuid) {
 		// clear the cache and remeasure
 		Inflation.Cache = {
@@ -32,9 +34,7 @@ function inflate(org, cur, p, E, step, stiff_ratio, convace_threshold, v_dis_fac
 	var sum_section_angles = result.sums;
 
 	var edges = measure_folding_angles(cur);
-	var concave_edges = countIf(edges, function(obj){return obj.folding_angle<0;});
-
-	console.log('concave_edges = ' + concave_edges);
+	var concave_edges = countIf(edges, function(obj){return obj.folding_angle<0;});	
 	
 	// init forces
 	for(var i=0;i<cur.vertices.length;++i) {
@@ -122,6 +122,8 @@ function inflate(org, cur, p, E, step, stiff_ratio, convace_threshold, v_dis_fac
 	}
 
 	console.log('total displacement = ' + sum_moved);
+
+	console.timeEnd('inflate');
 
 	return sum_moved;
 }
