@@ -174,8 +174,9 @@ function measure_section_angles(g)  {
 // return [{vid1, vid2, folding_angle}]
 function measure_folding_angles(g) {
 	var folding_angles = [];
-	var edges = {};	
+	var edges = { edge_count: 0 };	
 	var eid = 0;
+	
 
 	for(var i=0;i<g.faces.length;++i) {
 		var face = g.faces[i];
@@ -228,6 +229,8 @@ function measure_folding_angles(g) {
 					eid  : eid++,
 					fids : [i]
 				};
+
+				edges.edge_count++
 			}
 
 			
@@ -235,4 +238,23 @@ function measure_folding_angles(g) {
 	}
 
 	return edges;
+}
+
+// measure total vertex moved for two meshes
+// p: THREE.Geometry
+// q: THREE.Geometry
+function measure_displacement(p, q) {
+	if(p.vertices.length !== q.vertices.length) {
+		console.log('number of vertices do not match!');
+		return -1;
+	}
+
+	var displacement = 0.0;
+
+	for(var i=0;i<p.vertices.length;++i) {
+		var d = p.vertices[i].clone().sub(q.vertices[i]).length ();
+		displacement += d;
+	}
+
+	return displacement;
 }

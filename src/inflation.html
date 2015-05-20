@@ -208,6 +208,8 @@
             orgGeometry.computeBoundingSphere();
 
             resetCamera();
+
+            updateMeasures();
         }
 
         function resetCamera() {            
@@ -234,35 +236,7 @@
             controls.addEventListener( 'change', render );
         }
 
-        $("html").on("dragleave", function(event) {
-            event.preventDefault();  
-            event.stopPropagation();
-        });
-
-        $("html").on("drop", function(event) {
-            event.preventDefault();  
-            event.stopPropagation();
-            var files = event.originalEvent.dataTransfer.files;
-            if(!files) return;
-
-            // only read the first file
-            var file = files[0];            
-            
-            if(!file.name.endsWith('.obj')) return;            
-            
-            var reader = new FileReader();          
-
-            reader.onload = function(e) {
-                var text = reader.result;
-                var loader = new OBJLoader();
-                var object = loader.parse(text);
-                onOBJLoaded(object);
-            }
-
-            reader.readAsText(file, 'UTF-8');
-            
-            
-        });
+        
 
         function onWindowResize() {
 
@@ -343,7 +317,37 @@
                     break;                
             }            
         }
+        
 
+        $("html").on("dragleave", function(event) {
+            event.preventDefault();  
+            event.stopPropagation();
+        });
+
+        $("html").on("drop", function(event) {
+            event.preventDefault();  
+            event.stopPropagation();
+            var files = event.originalEvent.dataTransfer.files;
+            if(!files) return;
+
+            // only read the first file
+            var file = files[0];            
+            
+            if(!file.name.endsWith('.obj')) return;            
+            
+            var reader = new FileReader();          
+
+            reader.onload = function(e) {
+                var text = reader.result;
+                var loader = new OBJLoader();
+                var object = loader.parse(text);
+                onOBJLoaded(object);
+            }
+
+            reader.readAsText(file, 'UTF-8');
+            
+            
+        });
        
 
         function updateInfalting() {
@@ -367,7 +371,7 @@
             }
         }
 
-        function updateColor() {
+        function updateMeasures() {
             var cur = mesh.geometry;
             // measure
             var result = measure_section_angles(cur);
@@ -381,9 +385,14 @@
 
             var radius = mesh.geometry.boundingSphere.radius;
 
+            var displacement = measure_displacement(cur, orgGeometry);
+
             $('#msg').show().html(
                 (inflating ? 'Inflating...' : 'Inflated') 
-              + ' | hyperbolic vertices = {0} | concave edges = {1} | radius = {2}'.format(result.count, concave_edges, Math.round(radius*1000)/1000));
+              + ' | hyperbolic vtx = {0} / {1} | concave edges = {2} / {3} | R = {4} | Avg Dis = {5}'.format(
+                result.count, cur.vertices.length,
+                concave_edges, edges.edge_count,
+                Math.round(radius*10000)/10000, Math.round(displacement/cur.vertices.length*10000)/10000));
 
             // assign color based on angle...
             if(showColor)
@@ -426,13 +435,13 @@
 
             if(!mesh) return;
 
-            if(inflating) updateInfalting();
             if(controls) controls.update();
+            if(inflating) {
+                updateInfalting();
+                updateMeasures();
+            }
 
             wire.visible = showWire;
-
-            updateColor();
-
             render();
         }
 
