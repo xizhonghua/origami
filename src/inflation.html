@@ -257,6 +257,9 @@
             wire.geometry.dispose();
             mesh.geometry = orgGeometry.clone();
             wire.geometry = orgGeometry.clone();
+
+            // re-measure
+            updateMeasures();
         }
 
         function updateGeometry() {
