@@ -1,399 +1,400 @@
 <html>
-    <head>
-        <meta charset="utf-8">
-        <title>Net Spliiter</title>    
-        <link rel="stylesheet" type="text/css" href="style/main.css">
-        <link rel="stylesheet" type="text/css" href="style/svg.css">
-        <link rel="stylesheet" type="text/css" href="style/jquery.svg.css">
-
-        <script src='https://code.jquery.com/jquery-2.1.3.min.js'></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js"></script>
-        <script src="js/svg/jquery.svg.min.js"></script>
-        <script src='js/extension.js'></script>
-        <script src="js/geometry.js"></script>
-        <script src="js/io.js"></script>
-        <script src='js/ori.js'></script>
-        <script src='js/net-spliiter.js'></script>
-
-    </head>
-    <body>        
-        <div id="hint" class="center w400 h200 absolute-center">            
-            <h1 class="margin4">Drop Net Here</h1> 
-            <h3>Or Start With Following Nets</h3>
-            <div id="models">                    
-            </div>
-        </div>
-
-        <div id="title">
-            Net-Splitter
-        </div>
-
-        <div id="frame" style="margin-top:30px;">
-            <div id="canvas" class="center svg-canvas">
-            </div>
-
-            <div class="center" id="export">
-                <button type="button" id="export-svg">Export Svg</button>
-                <button type="button" id="export-ori">Export Ori</button>
-            </div>
-
-            <div id="temp-canvas" class="svg-canvas">                        
-            </div>        
-                                
-        </div>     
-
-        <a id="hidden-link" class="hidden"></a>
-
-        <div id="copyright" source="copyright.html">
-        </div>
-
-        <script type="text/javascript">
-        var app_name = "Net-Splitter";
-        var filename = '';
-        var export_file_url = null;
-
-        var highlighted_crease = null;
-
-        var selected_cid = -1;        
-
-        // origamis on the canvas
-        var origamis = [];
-
-        // splitted ones, used for undo
-        var spliited_origamis = [];
-
-        // scale for visualiztion        
-        var canvas_scale = 1.0;
-        // translate 
-        var canvas_translation = null;
-        // stroke_width
-        var canvas_stroke_width = 1.0;
-
-
-        $("#canvas").svg();        
-        $("#temp-canvas").svg();
-        
-        var svg = $('#canvas').svg('get');
-
-        // temp canvas for export svg files
-        var svg_temp = $('#temp-canvas').svg('get');
-        
-        var svg_cfg = null;
-
-        svg.configure({id: 'raw-svg'}); 
-
-        var raw_svg = $('#raw-svg').get(0);
-
-        $('#title').hide();
-        $('.svg-canvas').hide();
-        $('#export').hide();
-
-        function clear_canvas() {
-            origamis = [];
-            spliited_origamis = [];
-
-            //TODO clear svg
-        }
-
-        function init_canvas() {
-            // will be removed automatically, set it to null
-            highlighted_crease = null;            
-            selected_cid = -1;
-
-            // determine the scale of the model based on the canvas size
-            var full_net = origamis[0];
-            var box = full_net.geometry.boundingBox;
-            
-            var size = box.size();
-            var width = size.x;
-            var height = size.z;            
-
-            var max_width = $(window).width() * 0.98;
-            var max_height = $(window).height() * 0.98 - 80;
-            
-
-            // scale
-            canvas_scale = Math.min(max_width/width, max_height/height);
-
-            var svg_width = width*canvas_scale;
-            var svg_height = height*canvas_scale;
-
-            canvas_translation = box.min;
-            canvas_stroke_width = Math.max(svg_width, svg_height)*0.0015;
-
-            svg.configure({
-                id: 'raw-svg',
-                width:svg_width,
-                height:svg_height
-                }, true);
-            }
-
-        // undo the last split operation
-        function undo() {
-            //TODO
-        }
-
-        // draw the origami as svg
-        function draw() {
-
-            svg.clear();
-
-            highlighted_crease = null;
-
-            $.each(origamis, function(index, origami){
-                svg_cfg = origami.drawSVG(svg, canvas_translation, canvas_scale, canvas_stroke_width);
-            });
-            
-            $("#canvas").show();        
-            svg.configure({id: 'raw-svg'}, false);
-        }
-
-        function model_loaded_handler(model_name) {
-            // disply and center the titile
-            $("#title").html(app_name + " - " + model_name)
-            .css("left", ($(document).width()-$("#title").width())/2).show();
-
-            // hide the hint
-            $('#hint').hide();
-
-            // output filename
-            filename = model_name;
-
-            // init canvas
-            init_canvas();
-
-            // render
-            draw();
-        } 
-
-        // load content: copyright
-        $('div[source]').each(function(index){
-            $(this).load($(this).attr('source'));
-        });
-
-
-        // load the model list
-        $.getJSON("models/model-list.json", function(data, textStatus){            
-        
-            for(var i=0;i<data.models.length;++i)
-            {
-                var model = data.models[i];                    
-
-                $("<button></button>").attr(
-                    {
-                        "type" : "button",
-                        "model" : model.model_url,
-                        "traj" : model.traj_url,
-                        "model-name" : model.name
-                    }
-                ).html(model.name).appendTo($("#models"));
-            }
-
-            $("button").click(function() {                                
-                model_url = $(this).attr("model");
-                if(!model_url) return;
-
-                traj_url = $(this).attr("traj");
-                model_name = $(this).attr("model-name");
-
-                clear_canvas();
-                
-                $("#title").html(app_name + " - loading...");
-
-                var origami = new Origami.Model();
-
-                origamis.push(origami);
-
-                origami.load(model_url, null, function(){
-                    model_loaded_handler(model_name);
-                });
-            });           
-        });                            
-    
-
-        // export svg
-        $('#export-svg').click(function(){
-            
-            var zip = new JSZip();
-
-            $.each(origamis, function(index, origami) {
-                var box = origami.geometry.boundingBox;
-
-                var size = box.size();
-                var width = size.x;
-                var height = size.z;         
-
-                // tranlsate
-                var T = box.min;
-                // no scaling
-                var S = 1.0;
-                // strokeWidth
-                var W = Math.max(width, height)*0.002;
-
-                // clear the canvas
-                svg_temp.clear();
-
-                // draw, no scale
-                origami.drawSVG(svg_temp, T, S, W);
-
-                // set svg size
-                svg_temp.configure({                
-                    width:width,
-                    height:height
-                }, true);
-
-                var text = svg_temp.toSVG();
-
-                console.log(text);
-
-                var svg_filename = filename + '_sub_' + index + '_cut.svg';
-
-                zip.file(svg_filename, text);
-            });
-
-            var content = zip.generate({type:'blob'});
-
-            console.log(content);         
-                        
-            var data = new Blob([content], {type : 'data:application/zip'});
-            if(export_file_url)
-                window.URL.revokeObjectURL(export_file_url);
-            export_file_url = window.URL.createObjectURL(data);
-            
-            var a = $('#hidden-link').get(0);            
-            a.href = export_file_url;
-            a.download = filename + '_svgs.zip';
-            a.click();
-        });
-
-        $('#export-ori').click(function(){
-            //TODO
-        });
-
-        $("html").on("dragover", function(event) {
-            event.preventDefault();  
-            event.stopPropagation();
-            //$(this).addClass('dragging');
-        });
-
-        $("html").on("dragleave", function(event) {
-            event.preventDefault();  
-            event.stopPropagation();
-            //$(this).removeClass('dragging');
-        });
-
-        $("html").on("drop", function(event) {
-            event.preventDefault();  
-            event.stopPropagation();
-            var files = event.originalEvent.dataTransfer.files;
-            if(!files) return;
-
-            // only read the first file
-            var file = files[0];
-            var loader = null;
-
-            if(file.name.endsWith('.json'))
-                loader = new Origami.JSONLoader();
-            else if(file.name.endsWith('.ori'))
-                loader = new Origami.ORILoader();
-            else
-                return;
-
-            clear_canvas();
-
-            var origami = new Origami.Model();
-            
-            origamis.push(origami);
-
-            loader.load(file, function(obj) {                
-
-                origami.build(obj);
-
-                model_loaded_handler(file.name);
-            });
-        
-        });
-
-        // find the closest crease based on the point among all origmais
-        function findClosestCrease(pt) {
-            var cid = -1;
-            var selected_origami = null;
-
-            for(var i=0;i<origamis.length;++i)
-            {
-                var origami = origamis[i];
-                cid = origami.getClosestCrease(pt);
-                if(cid>=0) {
-                    selected_origami = origami;
-                    break;
-                }
-            }
-
-            if(cid == -1) return null;
-
-            return {
-                cid : cid,
-                origami : selected_origami
-            };
-        }
-
-        // mouse move event handler
-        $('#canvas').mousemove(function(event) {            
-            if(origamis.length == 0) return;
-
-            // Create an SVGPoint for future math
-            var pt = raw_svg.createSVGPoint();
-            pt.x = event.clientX; pt.y = event.clientY;
-            var gt = pt.matrixTransform(raw_svg.getScreenCTM().inverse());
-
-            if(highlighted_crease)
-            {         
-                svg.remove(highlighted_crease);
-                highlighted_crease = null;
-            }            
-
-            var result = findClosestCrease(gt);
-
-            if(!result) return;
-
-            var cid = result.cid;
-            var selected_origami = result.origami;            
-
-            highlighted_crease = selected_origami.highLightCrease(svg, cid);
-        });
-
-        $('#canvas').click(function(event) {
-            if(origamis.length == 0) return;
-
-            // Create an SVGPoint for future math
-            var pt = raw_svg.createSVGPoint();
-            pt.x = event.clientX; pt.y = event.clientY;
-            var gt = pt.matrixTransform(raw_svg.getScreenCTM().inverse());
-            
-            var result = findClosestCrease(gt);
-
-            if(!result) return;
-
-            var cid = result.cid;
-            var selected_origami = result.origami;            
-           
-            selected_cid = cid;
-
-            // split the net
-            var subs = selected_origami.split(cid);
-
-            origamis.splice(origamis.indexOf(selected_origami), 1);
-            origamis.push.apply(origamis, subs);
-
-            spliited_origamis.push(selected_origami);
-
-            draw();
-
-            // show the export buttons
-            $('#export').hide().fadeIn();
-
-        });        
-        </script>    
-    </body>
+
+<head>
+  <meta charset="utf-8">
+  <title>Net Spliiter</title>
+  <link rel="stylesheet" type="text/css" href="style/main.css">
+  <link rel="stylesheet" type="text/css" href="style/svg.css">
+  <link rel="stylesheet" type="text/css" href="style/jquery.svg.css">
+  <script src='https://code.jquery.com/jquery-2.1.3.min.js'></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js"></script>
+  <script src="js/svg/jquery.svg.min.js"></script>
+  <script src='js/extension.js'></script>
+  <script src="js/geometry.js"></script>
+  <script src="js/io.js"></script>
+  <script src='js/ori.js'></script>
+  <script src='js/net-spliiter.js'></script>
+</head>
+
+<body>
+  <div id="hint" class="center w400 h200 absolute-center">
+    <h1 class="margin4">Drop the Net Here</h1>
+    <p>Supported formats: *.ori.json, *.ori</p>
+    <h3>Or Start With Following Nets</h3>
+    <div id="models">
+    </div>
+  </div>
+  <div id="title">
+    Net-Splitter
+  </div>
+  <div id="frame" style="margin-top:30px;">
+    <div id="canvas" class="center svg-canvas">
+    </div>
+    <div class="center" id="export">
+      <button type="button" id="export-svg">Export Svg</button>
+      <button type="button" id="export-ori">Export Ori</button>
+    </div>
+    <div id="temp-canvas" class="svg-canvas">
+    </div>
+  </div>
+  <a id="hidden-link" class="hidden"></a>
+  <div id="copyright" source="copyright.html">
+  </div>
+  <script type="text/javascript">
+  var app_name = "Net-Splitter";
+  var filename = '';
+  var export_file_url = null;
+
+  var highlighted_crease = null;
+
+  var selected_cid = -1;
+
+  // origamis on the canvas
+  var origamis = [];
+
+  // splitted ones, used for undo
+  var spliited_origamis = [];
+
+  // scale for visualiztion        
+  var canvas_scale = 1.0;
+  // translate 
+  var canvas_translation = null;
+  // stroke_width
+  var canvas_stroke_width = 1.0;
+
+
+  $("#canvas").svg();
+  $("#temp-canvas").svg();
+
+  var svg = $('#canvas').svg('get');
+
+  // temp canvas for export svg files
+  var svg_temp = $('#temp-canvas').svg('get');
+
+  var svg_cfg = null;
+
+  svg.configure({
+    id: 'raw-svg'
+  });
+
+  var raw_svg = $('#raw-svg').get(0);
+
+  $('#title').hide();
+  $('.svg-canvas').hide();
+  $('#export').hide();
+
+  function clear_canvas() {
+    origamis = [];
+    spliited_origamis = [];
+
+    //TODO clear svg
+  }
+
+  function init_canvas() {
+    // will be removed automatically, set it to null
+    highlighted_crease = null;
+    selected_cid = -1;
+
+    // determine the scale of the model based on the canvas size
+    var full_net = origamis[0];
+    var box = full_net.geometry.boundingBox;
+
+    var size = box.size();
+    var width = size.x;
+    var height = size.z;
+
+    var max_width = $(window).width() * 0.98;
+    var max_height = $(window).height() * 0.98 - 80;
+
+
+    // scale
+    canvas_scale = Math.min(max_width / width, max_height / height);
+
+    var svg_width = width * canvas_scale;
+    var svg_height = height * canvas_scale;
+
+    canvas_translation = box.min;
+    canvas_stroke_width = Math.max(svg_width, svg_height) * 0.0015;
+
+    svg.configure({
+      id: 'raw-svg',
+      width: svg_width,
+      height: svg_height
+    }, true);
+  }
+
+  // undo the last split operation
+  function undo() {
+    //TODO
+  }
+
+  // draw the origami as svg
+  function draw() {
+
+    svg.clear();
+
+    highlighted_crease = null;
+
+    $.each(origamis, function(index, origami) {
+      svg_cfg = origami.drawSVG(svg, canvas_translation, canvas_scale, canvas_stroke_width);
+    });
+
+    $("#canvas").show();
+    svg.configure({
+      id: 'raw-svg'
+    }, false);
+  }
+
+  function model_loaded_handler(model_name) {
+    // disply and center the titile
+    $("#title").html(app_name + " - " + model_name)
+      .css("left", ($(document).width() - $("#title").width()) / 2).show();
+
+    // hide the hint
+    $('#hint').hide();
+
+    // output filename
+    filename = model_name;
+
+    // init canvas
+    init_canvas();
+
+    // render
+    draw();
+  }
+
+  // load content: copyright
+  $('div[source]').each(function(index) {
+    $(this).load($(this).attr('source'));
+  });
+
+
+  // load the model list
+  $.getJSON("models/model-list.json", function(data, textStatus) {
+
+    for (var i = 0; i < data.models.length; ++i) {
+      var model = data.models[i];
+      // currently only support the first component
+      var comp = model.components[0];
+
+      $("<button></button>").attr({
+        "type": "button",
+        "model": comp.model_url,
+        "traj": comp.traj_url,
+        "model-name": model.name
+      }).html(model.name).appendTo($("#models"));
+    }
+
+    $("button").click(function() {
+      model_url = $(this).attr("model");
+      if (!model_url) return;
+
+      traj_url = $(this).attr("traj");
+      model_name = $(this).attr("model-name");
+
+      clear_canvas();
+
+      $("#title").html(app_name + " - loading...");
+
+      var origami = new Origami.Model();
+
+      origamis.push(origami);
+
+      origami.load(model_url, null, function() {
+        model_loaded_handler(model_name);
+      });
+    });
+  });
+
+
+  // export svg
+  $('#export-svg').click(function() {
+
+    var zip = new JSZip();
+
+    $.each(origamis, function(index, origami) {
+      var box = origami.geometry.boundingBox;
+
+      var size = box.size();
+      var width = size.x;
+      var height = size.z;
+
+      // tranlsate
+      var T = box.min;
+      // no scaling
+      var S = 1.0;
+      // strokeWidth
+      var W = Math.max(width, height) * 0.002;
+
+      // clear the canvas
+      svg_temp.clear();
+
+      // draw, no scale
+      origami.drawSVG(svg_temp, T, S, W);
+
+      // set svg size
+      svg_temp.configure({
+        width: width,
+        height: height
+      }, true);
+
+      var text = svg_temp.toSVG();
+
+      console.log(text);
+
+      var svg_filename = filename + '_sub_' + index + '_cut.svg';
+
+      zip.file(svg_filename, text);
+    });
+
+    var content = zip.generate({
+      type: 'blob'
+    });
+
+    console.log(content);
+
+    var data = new Blob([content], {
+      type: 'data:application/zip'
+    });
+    if (export_file_url)
+      window.URL.revokeObjectURL(export_file_url);
+    export_file_url = window.URL.createObjectURL(data);
+
+    var a = $('#hidden-link').get(0);
+    a.href = export_file_url;
+    a.download = filename + '_svgs.zip';
+    a.click();
+  });
+
+  $('#export-ori').click(function() {
+    //TODO
+  });
+
+  $("html").on("dragover", function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    //$(this).addClass('dragging');
+  });
+
+  $("html").on("dragleave", function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    //$(this).removeClass('dragging');
+  });
+
+  $("html").on("drop", function(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    var files = event.originalEvent.dataTransfer.files;
+    if (!files) return;
+
+    // only read the first file
+    var file = files[0];
+    var loader = null;
+
+    if (file.name.endsWith('.json'))
+      loader = new Origami.JSONLoader();
+    else if (file.name.endsWith('.ori'))
+      loader = new Origami.ORILoader();
+    else
+      return;
+
+    clear_canvas();
+
+    var origami = new Origami.Model();
+
+    origamis.push(origami);
+
+    loader.load(file, function(obj) {
+
+      origami.build(obj);
+
+      model_loaded_handler(file.name);
+    });
+
+  });
+
+  // find the closest crease based on the point among all origmais
+  function findClosestCrease(pt) {
+    var cid = -1;
+    var selected_origami = null;
+
+    for (var i = 0; i < origamis.length; ++i) {
+      var origami = origamis[i];
+      cid = origami.getClosestCrease(pt);
+      if (cid >= 0) {
+        selected_origami = origami;
+        break;
+      }
+    }
+
+    if (cid == -1) return null;
+
+    return {
+      cid: cid,
+      origami: selected_origami
+    };
+  }
+
+  // mouse move event handler
+  $('#canvas').mousemove(function(event) {
+    if (origamis.length == 0) return;
+
+    // Create an SVGPoint for future math
+    var pt = raw_svg.createSVGPoint();
+    pt.x = event.clientX;
+    pt.y = event.clientY;
+    var gt = pt.matrixTransform(raw_svg.getScreenCTM().inverse());
+
+    if (highlighted_crease) {
+      svg.remove(highlighted_crease);
+      highlighted_crease = null;
+    }
+
+    var result = findClosestCrease(gt);
+
+    if (!result) return;
+
+    var cid = result.cid;
+    var selected_origami = result.origami;
+
+    highlighted_crease = selected_origami.highLightCrease(svg, cid);
+  });
+
+  $('#canvas').click(function(event) {
+    if (origamis.length == 0) return;
+
+    // Create an SVGPoint for future math
+    var pt = raw_svg.createSVGPoint();
+    pt.x = event.clientX;
+    pt.y = event.clientY;
+    var gt = pt.matrixTransform(raw_svg.getScreenCTM().inverse());
+
+    var result = findClosestCrease(gt);
+
+    if (!result) return;
+
+    var cid = result.cid;
+    var selected_origami = result.origami;
+
+    selected_cid = cid;
+
+    // split the net
+    var subs = selected_origami.split(cid);
+
+    origamis.splice(origamis.indexOf(selected_origami), 1);
+    origamis.push.apply(origamis, subs);
+
+    spliited_origamis.push(selected_origami);
+
+    draw();
+
+    // show the export buttons
+    $('#export').hide().fadeIn();
+
+  });
+  </script>
+</body>
+
 </html>
