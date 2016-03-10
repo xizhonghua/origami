@@ -1,92 +1,129 @@
 {
-    "models": [{
-        "name": "Horse",
-        "components": [{
-            "model_url": "models/horse/horse-312_patch_0.ori",
-            "traj_url": "models/horse/horse-312_patch_0.trj"
-        }, {
-            "model_url": "models/horse/horse-312_patch_1.ori",
-            "traj_url": "models/horse/horse-312_patch_1.trj"
-        }, {
-            "model_url": "models/horse/horse-312_patch_2.ori",
-            "traj_url": "models/horse/horse-312_patch_2.trj"
-        }, {
-            "model_url": "models/horse/horse-312_patch_3.ori",
-            "traj_url": "models/horse/horse-312_patch_3.trj"
-        }, {
-            "model_url": "models/horse/horse-312_patch_4.ori",
-            "traj_url": "models/horse/horse-312_patch_4.trj"
-        }, {
-            "model_url": "models/horse/horse-312_patch_5.ori",
-            "traj_url": "models/horse/horse-312_patch_5.trj"
-        }, {
-            "model_url": "models/horse/horse-312_patch_6.ori",
-            "traj_url": "models/horse/horse-312_patch_6.trj"
-        }]
+  "models": [{
+    "name": "Horse",
+    "components": [{
+      "model_url": "models/horse/horse-312_patch_0.ori",
+      "traj_url": "models/horse/horse-312_patch_0.trj"
     }, {
-        "name": "Bunny",
-        "components": [{
-            "model_url": "models/bunny-128_94716.ori.json",
-            "traj_url": "models/bunny-128_94716_1427762975.trj.json"
-        }]
+      "model_url": "models/horse/horse-312_patch_1.ori",
+      "traj_url": "models/horse/horse-312_patch_1.trj"
     }, {
-        "name": "Bunny-body",
-        "components": [{
-            "model_url": "models/bunny-128_patch_0_16662.ori.json",
-            "traj_url": "models/bunny-128_patch_0_16662_1427420191.trj.json"
-        }]
+      "model_url": "models/horse/horse-312_patch_2.ori",
+      "traj_url": "models/horse/horse-312_patch_2.trj"
     }, {
-        "name": "MoneyBox",
-        "components": [{
-            "model_url": "models/moneybox-128.ori.json",
-            "traj_url": "models/moneybox-128.trj1.json"
-        }]
+      "model_url": "models/horse/horse-312_patch_3.ori",
+      "traj_url": "models/horse/horse-312_patch_3.trj"
     }, {
-        "name": "Periscope",
-        "components": [{
-            "model_url": "models/periscope.ori.json",
-            "traj_url": "models/periscope_1428327072.trj.json"
-        }]
+      "model_url": "models/horse/horse-312_patch_4.ori",
+      "traj_url": "models/horse/horse-312_patch_4.trj"
     }, {
-        "name": "Periscope2",
-        "components": [{
-            "model_url": "models/periscope2.ori.json",
-            "traj_url": "models/periscope2_1427035284.trj.json"
-        }]
+      "model_url": "models/horse/horse-312_patch_5.ori",
+      "traj_url": "models/horse/horse-312_patch_5.trj"
     }, {
-        "name": "Sphere1",
-        "components": [{
-            "model_url": "models/sphere-162_79707.ori.json"
-        }]
-    }, {
-        "name": "Sphere2",
-        "components": [{
-            "model_url": "models/sphere-deformed-5.ori.json",
-            "traj_url": "models/sphere-deformed-5.trj.json"
-        }]
-    }, {
-        "name": "cube",
-        "components": [{
-            "model_url": "models/cube2_273018.ori.json",
-            "traj_url": "models/cube2_273018_1428273447.trj.json"
-        }]
-    }, {
-        "name": "cube-ordered",
-        "components": [{
-            "model_url": "models/cube2_273018.ori.json",
-            "traj_url": "models/cube2_273018_1428273052.trj.json"
-        }]
-    }, {
-        "name": "star-024",
-        "components": [{
-            "model_url": "models/star-024_18811.ori.json",
-            "traj_url": "models/star-024_18811_1428281430.trj.json"
-        }]
-    }, {
-        "name": "star-4",
-        "components": [{
-            "model_url": "models/star-4split.ori.json",
-            "traj_url": "models/star-4split.trj.json"
-        }]
+      "model_url": "models/horse/horse-312_patch_6.ori",
+      "traj_url": "models/horse/horse-312_patch_6.trj"
     }]
+  }, {
+    "name": "Squirtle",
+    "components": [{
+      "model_url": "models/squirtle/0.ori"
+    }, {
+      "model_url": "models/squirtle/1.ori"
+    }, {
+      "model_url": "models/squirtle/2.ori"
+    }, {
+      "model_url": "models/squirtle/3.ori"
+    }, {
+      "model_url": "models/squirtle/4.ori"
+    }, {
+      "model_url": "models/squirtle/5.ori"
+    }, {
+      "model_url": "models/squirtle/6.ori"
+    }, {
+      "model_url": "models/squirtle/7.ori"
+    }]
+  }, {
+    "name": "Bunny",
+    "components": [{
+      "model_url": "models/bunny-128_94716.ori.json",
+      "traj_url": "models/bunny-128_94716_1427762975.trj.json"
+    }]
+  }, {
+    "name": "Bunny-body",
+    "components": [{
+      "model_url": "models/bunny-128_patch_0_16662.ori.json",
+      "traj_url": "models/bunny-128_patch_0_16662_1427420191.trj.json"
+    }]
+  }, {
+    "name": "MoneyBox",
+    "components": [{
+      "model_url": "models/moneybox-128.ori.json",
+      "traj_url": "models/moneybox-128.trj1.json"
+    }]
+  }, {
+    "name": "Periscope",
+    "components": [{
+      "model_url": "models/periscope.ori.json",
+      "traj_url": "models/periscope_1428327072.trj.json"
+    }]
+  }, {
+    "name": "Periscope2",
+    "components": [{
+      "model_url": "models/periscope2.ori.json",
+      "traj_url": "models/periscope2_1427035284.trj.json"
+    }]
+  }, {
+    "name": "Sphere1",
+    "components": [{
+      "model_url": "models/sphere-162_79707.ori.json"
+    }]
+  }, {
+    "name": "Sphere2",
+    "components": [{
+      "model_url": "models/sphere-deformed-5.ori.json",
+      "traj_url": "models/sphere-deformed-5.trj.json"
+    }]
+  }, {
+    "name": "cube",
+    "components": [{
+      "model_url": "models/cube2_273018.ori.json",
+      "traj_url": "models/cube2_273018_1428273447.trj.json"
+    }]
+  }, {
+    "name": "cube-ordered",
+    "components": [{
+      "model_url": "models/cube2_273018.ori.json",
+      "traj_url": "models/cube2_273018_1428273052.trj.json"
+    }]
+  }, {
+    "name": "star-024",
+    "components": [{
+      "model_url": "models/star-024_18811.ori.json",
+      "traj_url": "models/star-024_18811_1428281430.trj.json"
+    }]
+  }, {
+    "name": "Snail",
+    "components": [{
+      "model_url": "models/snail/0.ori",
+      "traj_url": "models/snail/0.trj"
+    }, {
+      "model_url": "models/snail/1.ori",
+      "traj_url": "models/snail/1.trj"
+    }, {
+      "model_url": "models/snail/2.ori",
+      "traj_url": "models/snail/2.trj"
+    }, {
+      "model_url": "models/snail/3.ori",
+      "traj_url": "models/snail/3.trj"
+    }, {
+      "model_url": "models/snail/4.ori",
+      "traj_url": "models/snail/4.trj"
+    }]
+  }, {
+    "name": "star-4",
+    "components": [{
+      "model_url": "models/star-4split.ori.json",
+      "traj_url": "models/star-4split.trj.json"
+    }]
+  }]
 }
