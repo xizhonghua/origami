@@ -26,21 +26,29 @@
   }, {
     "name": "Squirtle",
     "components": [{
-      "model_url": "models/squirtle/0.ori"
+      "model_url": "models/squirtle/0.ori",
+      "traj_url": "models/squirtle/0.trj"
     }, {
-      "model_url": "models/squirtle/1.ori"
+      "model_url": "models/squirtle/1.ori",
+      "traj_url": "models/squirtle/1.trj"
     }, {
-      "model_url": "models/squirtle/2.ori"
+      "model_url": "models/squirtle/2.ori",
+      "traj_url": "models/squirtle/2.trj"
     }, {
-      "model_url": "models/squirtle/3.ori"
+      "model_url": "models/squirtle/3.ori",
+      "traj_url": "models/squirtle/3.trj"
     }, {
-      "model_url": "models/squirtle/4.ori"
+      "model_url": "models/squirtle/4.ori",
+      "traj_url": "models/squirtle/4.trj"
     }, {
-      "model_url": "models/squirtle/5.ori"
+      "model_url": "models/squirtle/5.ori",
+      "traj_url": "models/squirtle/5.trj"
     }, {
-      "model_url": "models/squirtle/6.ori"
+      "model_url": "models/squirtle/6.ori",
+      "traj_url": "models/squirtle/6.trj"
     }, {
-      "model_url": "models/squirtle/7.ori"
+      "model_url": "models/squirtle/7.ori",
+      "traj_url": "models/squirtle/7.trj"
     }]
   }, {
     "name": "Bunny",
