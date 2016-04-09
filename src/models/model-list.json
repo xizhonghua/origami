@@ -133,5 +133,13 @@
       "model_url": "models/star-4split.ori.json",
       "traj_url": "models/star-4split.trj.json"
     }]
+  },
+  {
+    "name": "Miura_3_3",
+    "components": [{
+      "model_url": "models/miura_3_3.ori.json",
+      "traj_url": "models/miura_3_3.trj.json"
+    }]
   }]
+
 }
