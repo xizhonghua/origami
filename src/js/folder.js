@@ -10,24 +10,14 @@ var delay_p = 0.1 * max_p;
 function init() {
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.001, 1e6);
-
-  controls = new THREE.OrbitControls(camera);
-
-  // hack the keys...
-  controls.keys = { LEFT: 39, UP: 40, RIGHT: 37, BOTTOM: 38 };
-
-  controls.rotateSpeed = 2.0;
-  controls.zoomSpeed = 1.0;
-
-  controls.noZoom = false;
-  controls.noPan = false;
-
+  
   renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0xffffff, 1.0);
 
   document.body.appendChild(renderer.domElement);
+
 
   var ambientLight = new THREE.AmbientLight(0xcccccc);
   scene.add(ambientLight);
@@ -171,9 +161,26 @@ function resetCamera() {
   camera.position.z = 3;
   camera.position.x = 0;
   camera.position.y = 0;
-  camera.rotation.set(0, 0, 0);
-  controls.rotateUp(0.8);
-  controls.update();
+  camera.rotation.set(0, 0, 0);  
+  
+  if(controls) controls.removeEventListener( 'change', render );
+
+  // control
+  controls = new THREE.TrackballControls( camera, renderer.domElement );
+
+  controls.rotateSpeed = 5.0;
+  controls.zoomSpeed = 1.5;
+  controls.panSpeed = 0.8;
+
+  controls.noZoom = false;
+  controls.noPan = false;
+
+  controls.staticMoving = true;
+  controls.dynamicDampingFactor = 0.3;
+
+  controls.keys = [ 65, 83, 68 ];
+
+  controls.addEventListener( 'change', render );
 }
 
 function removeModel() {
@@ -197,10 +204,11 @@ function removeModel() {
   origamis = [];
 }
 
-function render() {
-  rendered = true;
+function animate() {
 
-  requestAnimationFrame(render);
+  requestAnimationFrame(animate);
+
+  if(controls) controls.update();
 
   if (animation) {
     percentage += dir * animation_step;
@@ -215,6 +223,12 @@ function render() {
   $.each(origamis, function(index, ori) {
     ori.foldToPercentage(percentage / max_p);
   });
+
+  render();
+}
+
+function render() {
+  rendered = true;
 
   renderer.render(scene, camera);
 }
@@ -299,3 +313,4 @@ $(document).keypress(function(event) {
 });
 
 init();
+animate();
