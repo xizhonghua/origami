@@ -9,8 +9,11 @@
         <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
         <link  rel="stylesheet" type="text/css" href="style/main.css">
     </head>
-    <body>                
-        <select id="model-selector" onchange="hello(this)"></select>
+    <body>
+        <div id="model-selector">
+            Nets: <select id="model-selector-net" class="model-selector"></select>
+            CP:   <select id="model-selector-cp" class="model-selector"></select>
+        </div>
         <div id="title">
             Origami Folder
         </div>
@@ -47,9 +50,7 @@
         // by default use github as CDN
         var use_cdn = (getParameterByName("cdn") == "0") ? false : true;
 
-        var cdn_prefix = 'https://cdn.rawgit.com/xizhonghua/origami/master/src/';
-
-        var $model_selector = $("#model-selector");        
+        var cdn_prefix = 'https://cdn.rawgit.com/xizhonghua/origami/master/src/';        
 
         $.getJSON("models/model-list.json", function(data, textStatus){            
             
@@ -63,16 +64,18 @@
                         model.traj_url = cdn_prefix + model.traj_url;
                 }
 
+                var selector_id = model.type == 'rigid' ? '#model-selector-cp' : "#model-selector-net";
+
                 $("<option></option>").attr(
                     {                        
                         "components" : JSON.stringify(model.components),                        
                         "model-name" : model.name,
                         "value" : model.name
                     }
-                ).html(model.name).appendTo($model_selector);
+                ).html(model.name).appendTo(selector_id);
             }
 
-            $("#model-selector").change(function() {                
+            $(".model-selector").change(function() {                
                 var $option = $(this).find("option:selected");
                 model_name = $option.attr("model-name");
                 components = JSON.parse($option.attr("components"));
@@ -88,7 +91,7 @@
             });
 
             // // load the first model
-            $('#model-selector option:first-child').attr("selected", "selected").change();
+            $('#model-selector-net option:first-child').attr("selected", "selected").change();
         });
         // drag and drop
 

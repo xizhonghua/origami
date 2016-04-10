@@ -136,10 +136,19 @@
   },
   {
     "name": "Miura_3_3",
+    "type": "rigid",
     "components": [{
       "model_url": "models/miura_3_3.ori.json",
       "traj_url": "models/miura_3_3.trj.json"
     }]
-  }]
-
+  },
+  {
+    "name": "Waterbomb_12_6",
+    "type": "rigid",
+    "components": [{
+      "model_url": "models/wb_12_6.ori.json",
+      "traj_url": "models/wb_12_6.trj.json"
+    }]
+  }
+  ]
 }

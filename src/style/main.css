@@ -55,10 +55,10 @@ table {
 
 #model-selector {
     position: absolute;
-    top:10px;
+    top:4px;
     left:10px;
-    max-width: 240px;
     z-index: 101;
+    font-size: 14px; 
 }
 
 #help {
@@ -80,6 +80,6 @@ table {
 #title {
     position: absolute;
     top:4px;
-    left:45%;                
+    left:45%;
     font-weight: bold;                
 }
