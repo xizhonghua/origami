@@ -506,7 +506,7 @@ Origami.Model.prototype.updateGeometry = function() {
 
   this.geometry.computeFaceNormals();
 
-  this.geometry.computeVertexNormals();
+  // this.geometry.computeVertexNormals();
 
   this.geometry.verticesNeedUpdate = true;
   this.geometry.normalsNeedUpdate = true;

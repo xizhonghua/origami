@@ -38,21 +38,29 @@ function init() {
 
 // create 3d obj for the given origami and add it the senece 
 function addModel(origami) {
+
+  //var texture = THREE.ImageUtils.loadTexture('textures/paper.png'); 
+
+  // instantiate a loader
+  // var loader = new THREE.TextureLoader();
+  // loader.load('textures/paper.png', function(texture){
+    
+
+  // });  
+
   var materials = [
     new THREE.MeshPhongMaterial({
       color: 0x996633,
       specular: 0x050505,
       shininess: 10,
       emssion: 0x333333,
+      // map: texture,
       side: THREE.DoubleSide
     }),
-    // new THREE.MeshLambertMaterial({
-    //     color: 0x996633, 
-    // }),
     new THREE.MeshBasicMaterial({
       color: 0x000000,
       wireframe: true,
-      wireframeLinewidth: 0.1
+      wireframeLinewidth: 0.4
     })
   ];
 

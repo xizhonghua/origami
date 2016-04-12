@@ -149,6 +149,14 @@
       "model_url": "models/wb_12_6.ori.json",
       "traj_url": "models/wb_12_6.trj.json"
     }]
+  },
+  {
+    "name": "Yoshimura_12_12",
+    "type": "rigid",
+    "components": [{
+      "model_url": "models/yoshimura_12_12.ori.json",
+      "traj_url": "models/yoshimura_12_12.trj.json"
+    }]
   }
   ]
 }

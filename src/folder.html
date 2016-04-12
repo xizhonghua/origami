@@ -11,8 +11,12 @@
     </head>
     <body>
         <div id="model-selector">
-            Nets: <select id="model-selector-net" class="model-selector"></select>
-            CP:   <select id="model-selector-cp" class="model-selector"></select>
+            Nets: <select id="model-selector-net" class="model-selector">
+                
+            </select>
+            CP:   <select id="model-selector-cp" class="model-selector">
+                
+            </select>
         </div>
         <div id="title">
             Origami Folder
@@ -90,8 +94,14 @@
                 $(this).blur(); 
             });
 
-            // // load the first model
-            $('#model-selector-net option:first-child').attr("selected", "selected").change();
+            var model_name = getParameterByName("name");
+
+            if(model_name) {
+                $('.model-selector option[value="' + model_name + '"]').attr("selected", "selected").change();
+            } else {
+                // // load the first model
+                $('#model-selector-net option:first-child').attr("selected", "selected").change();
+            }
         });
         // drag and drop
 
