@@ -135,11 +135,11 @@
     }]
   },
   {
-    "name": "Miura_3_3",
+    "name": "Miura_8_8",
     "type": "rigid",
     "components": [{
-      "model_url": "models/miura_3_3.ori.json",
-      "traj_url": "models/miura_3_3.trj.json"
+      "model_url": "models/miura_8_8.ori.json",
+      "traj_url": "models/miura_8_8.trj.json"
     }]
   },
   {
