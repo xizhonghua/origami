@@ -1,183 +1,46 @@
 <html>
-    <head>
-        <meta charset="utf-8">
-        <meta name="description" content="Interactive Tree-Structure Origami Folding Process Visualizer">
-        <meta name="keywords" content="tree-structure,origami,folding,unfolding,visualizer,interactive,threejs,paper crafting,paper folding">
-        <meta name="author" content="Zhonghua Xi">
-        <title>Origami Folder</title>
-        <script src='https://code.jquery.com/jquery-2.1.3.min.js'></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
-        <link  rel="stylesheet" type="text/css" href="style/main.css">
-    </head>
-    <body>
-        <div id="model-selector">
-            Nets: <select id="model-selector-net" class="model-selector">
-                
-            </select>
-            CP:   <select id="model-selector-cp" class="model-selector">
-                
-            </select>
-        </div>
-        <div id="title">
-            Origami Folder
-        </div>
-        <div id="help">            
-            <table style="border=0">
-            <tr><td colspan="2" align="center">Controls</td></tr>
-            <tr><td align="right">mouse </td><td>rotation/zomming</td></tr>
-            <tr><td align="right">arrows </td><td>translation</td></tr>
-            <tr><td align="right">space </td><td>toggle animation</td></tr>            
-            <tr><td align="right">c </td><td>random colors</td></tr> 
-            <tr><td align="right">e </td><td>toggle edges</td></tr> 
-            <tr><td align="right">t </td><td>toggle opacity</td></tr>
-            <tr><td align="right">, </td><td>fold</td></tr>
-            <tr><td align="right">. </td><td>unfold</td></tr>
-            <tr><td align="right">[ </td><td>faster</td></tr>
-            <tr><td align="right">] </td><td>slower</td></tr>
-
-            </table>
-        </div>
-        <div id="copyright" source="copyright.html">            
-        </div>
-        <script src="http://threejs.org/examples/js/controls/TrackballControls.js"></script>
-        <script src='js/extension.js'></script>
-        <script src="js/io.js"></script>
-        <script src='js/ori.js'></script>
-        <script src='js/folder.js'></script>  
-        <script>
-        var app_name = 'Origami Folder';
-
-        $('div[source]').each(function(index){
-            $(this).load($(this).attr('source'));
-        });
-
-        // by default use github as CDN
-        var use_cdn = (getParameterByName("cdn") == "0") ? false : true;
-
-        var cdn_prefix = 'https://cdn.rawgit.com/xizhonghua/origami/master/src/';        
-
-        $.getJSON("models/model-list.json", function(data, textStatus){            
-            
-            for(var i=0;i<data.models.length;++i)
-            {
-                var model = data.models[i];
-
-                if (use_cdn) {
-                    model.model_url = cdn_prefix + model.model_url;
-                    if(model.traj_url) 
-                        model.traj_url = cdn_prefix + model.traj_url;
-                }
-
-                var selector_id = model.type == 'rigid' ? '#model-selector-cp' : "#model-selector-net";
-
-                $("<option></option>").attr(
-                    {                        
-                        "components" : JSON.stringify(model.components),                        
-                        "model-name" : model.name,
-                        "value" : model.name
-                    }
-                ).html(model.name).appendTo(selector_id);
-            }
-
-            $(".model-selector").change(function() {                
-                var $option = $(this).find("option:selected");
-                model_name = $option.attr("model-name");
-                components = JSON.parse($option.attr("components"));
-
-                loadModels(components, function(){
-                     $("#title").html(app_name + " - " + model_name)
-                    .css("left", ($(document).width()-$("#title").width())/2);
-                });                
-
-                $("#title").html(app_name + " - loading...");
-
-                $(this).blur(); 
-            });
-
-            var model_name = getParameterByName("name");
-
-            if(model_name) {
-                $('.model-selector option[value="' + model_name + '"]').attr("selected", "selected").change();
-            } else {
-                // // load the first model
-                $('#model-selector-net option:first-child').attr("selected", "selected").change();
-            }
-        });
-        // drag and drop
-
-        $("html").on("dragover", function(event) {
-            event.preventDefault();  
-            event.stopPropagation();            
-        });
-
-        $("html").on("dragleave", function(event) {
-            event.preventDefault();  
-            event.stopPropagation();            
-        });    
-
-        $("html").on("drop", function(event) {
-            event.preventDefault();  
-            event.stopPropagation();
-            var files = event.originalEvent.dataTransfer.files;
-            if(!files) return;
-
-            // only read the first file
-            var file = files[0];
-            var loader = null;
-            var is_model_file = false;
-            var is_traj_file = false
-
-            if(file.name.endsWith('.json')) {
-                loader = new Origami.JSONLoader();
-                is_model_file = true;
-                //TODO check file type...
-            }
-            else if(file.name.endsWith('.ori')) {
-                loader = new Origami.ORILoader();
-                is_model_file = true;
-            }
-            else if(file.name.endsWith('.trj')) {
-                loader = new Origami.TRJLoader();
-                is_traj_file = true;            
-            }
-            else {
-                return;
-            }
-
-            if(is_model_file) {
-                loader.load(file, function(obj) { 
-                    removeModel();                    
-
-                    var origami = new Origami.Model();
-
-                    origami.build(obj);                                    
-                    origami.loaded = true;
-                    origami.foldTo(origami.goal_cfg);
-
-                    // put in the array
-                    origamis.push(origami);
-                    
-                    addModel(origami);
-
-                    console.log(origami.name + ' loaded!');
-
-                    // reset scene, rescale
-                    resetScene();
-
-                    $("#title").html(app_name + " - " + file.name)
-                    .css("left", ($(document).width()-$("#title").width())/2);
-                });
-            }
-
-            if(is_traj_file) {
-                loader.load(file, function(obj){
-                    // set path ...
-                    origami.setFoldingPath(obj.trajs);
-                });
-            }
-        
-        });
-
-        </script>
-    </body>
+  <head>
+    <meta charset="utf-8">
+    <meta name="description" content="Interactive Tree-Structure Origami Folding Process Visualizer">
+    <meta name="keywords" content="tree-structure,origami,folding,unfolding,visualizer,interactive,threejs,paper crafting,paper folding">
+    <meta name="author" content="Zhonghua Xi">
+    <title>Origami Folder</title>
+    <script src='https://code.jquery.com/jquery-2.1.3.min.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r71/three.min.js"></script>
+    <link  rel="stylesheet" type="text/css" href="style/main.css">
+  </head>
+  <body>
+    <div id="model-selector">
+      <div>
+      Nets: <select id="model-selector-net" class="model-selector"></select>
+      Thickness: <input id="input-thickness" value="0.0" />
+      </div>
+      CP:   <select id="model-selector-cp" class="model-selector"></select>
+    </div>
+    <div id="title">
+      Origami Folder
+    </div>
+    <div id="help">
+      <table style="border=0">
+        <tr><td colspan="2" align="center">Controls</td></tr>
+        <tr><td align="right">mouse </td><td>rotation/zomming</td></tr>
+        <tr><td align="right">arrows </td><td>translation</td></tr>
+        <tr><td align="right">space </td><td>toggle animation</td></tr>
+        <tr><td align="right">c </td><td>random colors</td></tr>
+        <tr><td align="right">e </td><td>toggle edges</td></tr>
+        <tr><td align="right">t </td><td>toggle opacity</td></tr>
+        <tr><td align="right">, </td><td>fold</td></tr>
+        <tr><td align="right">. </td><td>unfold</td></tr>
+        <tr><td align="right">[ </td><td>faster</td></tr>
+        <tr><td align="right">] </td><td>slower</td></tr>
+      </table>
+    </div>
+    <div id="copyright" source="copyright.html">
+    </div>
+    <script src="http://threejs.org/examples/js/controls/TrackballControls.js"></script>
+    <script src='js/extension.js'></script>
+    <script src="js/io.js"></script>
+    <script src='js/ori.js'></script>
+    <script src='js/folder.js'></script>
+  </body>
 </html>

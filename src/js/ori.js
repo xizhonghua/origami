@@ -9,7 +9,13 @@ var Origami = Origami || {};
 Origami.Id = 0;
 
 // crease class
-Origami.Crease = function(vid1, vid2, folding_angle, fid, pid) {
+Origami.Crease = function(model, cid, vid1, vid2, folding_angle, fid, pid) {
+
+  // parent model
+  this.model = model;
+
+  // crease id
+  this.cid = cid;
 
   // vetex indices
   this.vid1 = vid1;
@@ -26,7 +32,13 @@ Origami.Crease = function(vid1, vid2, folding_angle, fid, pid) {
 }
 
 // face class
-Origami.Face = function(vid1, vid2, vid3, pid, cid) {
+Origami.Face = function(model, fid, vid1, vid2, vid3, pid, cid) {
+
+  // parent model
+  this.model = model;
+
+  // face id
+  this.fid = fid;
 
   // verter indices
   this.vids = [vid1, vid2, vid3];
@@ -38,6 +50,25 @@ Origami.Face = function(vid1, vid2, vid3, pid, cid) {
   this.cid = cid;
 }
 
+// index = 0, 1, 2
+Origami.Face.prototype.getVertexByIndex = function(index) {
+  return this.model.i_vertices[this.fid*3 + index];
+}
+
+Origami.Face.prototype.getVertex = function(vid) {
+  for(var i=0;i<3;++i)
+    if(vid === this.vids[i]) return this.getVertexByIndex(i);
+  return null;
+}
+
+// Compute the normal using i_vertices
+Origami.Face.prototype.computeNormal = function() {
+  var e1 = this.getVertexByIndex(1).clone().sub(this.getVertexByIndex(0));
+  var e2 = this.getVertexByIndex(2).clone().sub(this.getVertexByIndex(1));
+  var n = e1.clone().cross(e2).normalize();
+  return n;
+}
+
 // model class
 Origami.Model = function() {
   this.name = 'Origami_' + (++Origami.Id);
@@ -47,6 +78,10 @@ Origami.Model = function() {
 
   // folded vertices, array of THREE.vector3
   this.vertices = [];
+
+  // folded vertices, array of THREE.vertor3.
+  // each face has tree vertices.
+  this.i_vertices = [];
 
   // faces, array of Origami.Face
   this.faces = [];
@@ -90,6 +125,9 @@ Origami.Model = function() {
 
   // svg_cfg
   this.svg_cfg = {};
+
+  // thickness of the model
+  this.thickness = 0.0;
 }
 
 Origami.JSONLoader = function() {}
@@ -305,7 +343,7 @@ Origami.Model.prototype.build = function(model) {
   for (var i = 0; i < model.faces.length; ++i) {
     var f = model.faces[i];
 
-    var face = new Origami.Face(f[1], f[2], f[3], f[4], f[5]);
+    var face = new Origami.Face(this, i, f[1], f[2], f[3], f[4], f[5]);
 
     this.faces.push(face);
   }
@@ -316,7 +354,7 @@ Origami.Model.prototype.build = function(model) {
   for (var i = 0; i < model.creases.length; ++i) {
     var c = model.creases[i];
 
-    var crease = new Origami.Crease(c[0], c[1], c[2], c[3], c[4]);
+    var crease = new Origami.Crease(this, i, c[0], c[1], c[2], c[3], c[4]);
 
     this.creases.push(crease);
   }
@@ -347,6 +385,23 @@ Origami.Model.prototype.build = function(model) {
     this.goal_cfg.push(this.creases[i].folding_angle);
   }
 
+
+  // create idependent vertices, font-faces
+  for(var i=0;i<this.faces.length; ++i) {
+    var face = this.faces[i];
+    for(var j=0;j<3;++j) {
+      this.i_vertices.push(this.vertices[face.vids[j]].clone());
+    }
+  }
+
+  // create idependent vertices, back-faces
+  for(var i=0;i<this.faces.length; ++i) {
+    var face = this.faces[i];
+    for(var j=0;j<3;++j) {
+      this.i_vertices.push(this.vertices[face.vids[j]].clone());
+    }
+  }
+
   this.cur_cfg = this.start_cfg.clone();
 
   this.buildThreeGeometry();
@@ -362,15 +417,43 @@ Origami.Model.prototype.buildThreeGeometry = function() {
   this.geometry = new THREE.Geometry();
 
   // same pointer
-  this.geometry.vertices = this.vertices;
+  this.geometry.vertices = this.i_vertices;
+  // this.vertices;
+  // this.geometry.vertices = this.vertices;
 
   this.geometry.faces = [];
 
 
+  // front faces
   for (var i = 0; i < this.faces.length; ++i) {
-    var f = this.faces[i];
-    this.geometry.faces.push(new THREE.Face3(f.vids[0], f.vids[1], f.vids[2]));
+    this.geometry.faces.push(new THREE.Face3(i*3, i*3+1, i*3+2));
   }
+
+  // back faces
+  
+  for (var i = 0; i < this.faces.length; ++i) {
+    var index_offset = (this.faces.length + i) * 3;
+    this.geometry.faces.push(new THREE.Face3(index_offset+2, index_offset+1, index_offset));
+  }
+
+  // 4 side faces  
+  for (var i = 0; i < this.faces.length; ++i) {
+    // top face index
+    var o1 = i*3; 
+    // bottom face index
+    var o2 = (this.faces.length + i) * 3;
+
+    this.geometry.faces.push(new THREE.Face3(o1, o2, o2+1));
+    this.geometry.faces.push(new THREE.Face3(o1, o2+1, o1+1));
+
+    this.geometry.faces.push(new THREE.Face3(o1+1, o2+1, o2+2));
+    this.geometry.faces.push(new THREE.Face3(o1+1, o2+2, o1+2));
+
+    this.geometry.faces.push(new THREE.Face3(o1+2, o2+2, o2));
+    this.geometry.faces.push(new THREE.Face3(o1+1, o2, o1));
+  }  
+
+
 
   this.geometry.computeBoundingBox();
 
@@ -383,6 +466,10 @@ Origami.Model.prototype.translate = function(v) {
     this.flat_vertices[i].add(v);
   }
 
+  for(var i=0;i<this.i_vertices.length; ++i) {
+    this.i_vertices[i].add(v);
+  }
+
   this.updateGeometry();
 
   return this;
@@ -391,7 +478,11 @@ Origami.Model.prototype.translate = function(v) {
 Origami.Model.prototype.scale = function(scale) {
   for (var i = 0; i < this.vertices.length; ++i) {
     this.vertices[i].multiplyScalar(scale);
-    this.flat_vertices[i].multiplyScalar(scale);
+    this.flat_vertices[i].multiplyScalar(scale);    
+  }
+
+  for(var i=0;i<this.i_vertices.length; ++i) {
+    this.i_vertices[i].multiplyScalar(scale);
   }
 
   this.updateGeometry();
@@ -404,6 +495,12 @@ Origami.Model.prototype.scale = function(scale) {
 Origami.Model.prototype.setFoldingPath = function(path) {
   this.folding_path = path;
 };
+
+// set thickness
+Origami.Model.prototype.setThickness = function(thickness) {
+  this.thickness = thickness;
+  //TODO(zxi)
+}
 
 // fold the origami to certen percentage
 Origami.Model.prototype.foldToPercentage = function(percentage) {
@@ -456,7 +553,7 @@ Origami.Model.prototype.foldTo = function(cfg) {
   this.cur_cfg = cfg.clone();
 
   // folding matrices
-  ms = [];
+  ms = new Array(this.ordered_face_ids.length);
 
   // base face's rotation matrix is an identity matrix
   ms[this.base_face_id] = new THREE.Matrix4();
@@ -467,13 +564,27 @@ Origami.Model.prototype.foldTo = function(cfg) {
 
     // do not fold base face
     if (fid == this.base_face_id) continue;
-
     var face = this.faces[fid];
+    var pid = face.pid;
+    var parent_face = this.faces[pid];
+
     var crease = this.creases[face.cid];
     var folding_angle = cfg[face.cid];
-    var p1 = this.vertices[crease.vid1];
-    var p2 = this.vertices[crease.vid2];
-    var pid = face.pid;
+
+    // i_vertices
+    var p1 = parent_face.getVertex(crease.vid1).clone();
+    var p2 = parent_face.getVertex(crease.vid2).clone();
+    
+    // support thickness by using axis shift
+
+    
+
+    if(folding_angle < 0 && this.thickness > 0) {
+      var offset = parent_face.computeNormal().multiplyScalar(this.thickness);
+      p1.add(offset);
+      p2.add(offset);
+    }
+    
 
     // console.log('fid = ' + fid + ' pid = ' + pid + ' vid1 = ' + crease.vid1 + ' vid2 = ' + crease.vid2);
 
@@ -481,16 +592,25 @@ Origami.Model.prototype.foldTo = function(cfg) {
     var transform_matrix = new THREE.Matrix4();
     ms[fid] = transform_matrix.makeTransform(p1, p2, folding_angle).multiply(ms[pid]);
 
-    // fold each vertex
+    // Compute the folded position for front face.
     for (var j = 0; j < 3; j++) {
       var vid = face.vids[j];
 
-      // don't fold already folded vertices along the edge itself, this causes unstable folded shape
-      if (vid == crease.vid1 || vid == crease.vid2) continue;
-
-      // fold the vertex
-      this.vertices[vid].copy(this.flat_vertices[vid]).applyMatrix4(ms[fid]);
+      // compute the coordinates for each vertex on front face
+      this.i_vertices[fid*3 + j].copy(this.flat_vertices[vid]).applyMatrix4(ms[fid]);      
     }
+
+    // Compute the folded position for bottom face.
+
+    var offset = face.computeNormal().multiplyScalar(this.thickness);
+
+    for (var j = 0; j < 3; j++) {
+      var vid = face.vids[j];
+      // compute the coordinates for each vertex on front face
+      this.i_vertices[fid*3 + this.faces.length*3 + j].copy(this.i_vertices[fid*3+j]).add(offset);
+    }
+
+
 
   }
 

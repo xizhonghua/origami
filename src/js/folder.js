@@ -10,8 +10,10 @@ var delay_p = 0.1 * max_p;
 function init() {
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.001, 1e6);
-  
-  renderer = new THREE.WebGLRenderer({ antialias: true });
+
+  renderer = new THREE.WebGLRenderer({
+    antialias: true
+  });
   renderer.setPixelRatio(window.devicePixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setClearColor(0xffffff, 1.0);
@@ -44,7 +46,7 @@ function addModel(origami) {
   // instantiate a loader
   // var loader = new THREE.TextureLoader();
   // loader.load('textures/paper.png', function(texture){
-    
+
 
   // });  
 
@@ -169,12 +171,12 @@ function resetCamera() {
   camera.position.z = 3;
   camera.position.x = 0;
   camera.position.y = 0;
-  camera.rotation.set(0, 0, 0);  
-  
-  if(controls) controls.removeEventListener( 'change', render );
+  camera.rotation.set(0, 0, 0);
+
+  if (controls) controls.removeEventListener('change', render);
 
   // control
-  controls = new THREE.TrackballControls( camera, renderer.domElement );
+  controls = new THREE.TrackballControls(camera, renderer.domElement);
 
   controls.rotateSpeed = 5.0;
   controls.zoomSpeed = 1.5;
@@ -186,9 +188,9 @@ function resetCamera() {
   controls.staticMoving = true;
   controls.dynamicDampingFactor = 0.3;
 
-  controls.keys = [ 65, 83, 68 ];
+  controls.keys = [65, 83, 68];
 
-  controls.addEventListener( 'change', render );
+  controls.addEventListener('change', render);
 }
 
 function removeModel() {
@@ -216,7 +218,7 @@ function animate() {
 
   requestAnimationFrame(animate);
 
-  if(controls) controls.update();
+  if (controls) controls.update();
 
   if (animation) {
     percentage += dir * animation_step;
@@ -322,3 +324,119 @@ $(document).keypress(function(event) {
 
 init();
 animate();
+
+
+var app_name = 'Origami Folder';
+$('div[source]').each(function(index) {
+  $(this).load($(this).attr('source'));
+});
+
+// by default use github as CDN
+var use_cdn = (getParameterByName("cdn") == "0") ? false : true;
+var cdn_prefix = 'https://cdn.rawgit.com/xizhonghua/origami/master/src/';
+$.getJSON("models/model-list.json", function(data, textStatus) {
+
+  for (var i = 0; i < data.models.length; ++i) {
+    var model = data.models[i];
+    if (use_cdn) {
+      model.model_url = cdn_prefix + model.model_url;
+      if (model.traj_url)
+        model.traj_url = cdn_prefix + model.traj_url;
+    }
+    var selector_id = model.type == 'rigid' ? '#model-selector-cp' : "#model-selector-net";
+    $("<option></option>").attr({
+      "components": JSON.stringify(model.components),
+      "model-name": model.name,
+      "value": model.name
+    }).html(model.name).appendTo(selector_id);
+  }
+  $(".model-selector").change(function() {
+    var $option = $(this).find("option:selected");
+    model_name = $option.attr("model-name");
+    components = JSON.parse($option.attr("components"));
+    loadModels(components, function() {
+      $("#title").html(app_name + " - " + model_name)
+        .css("left", ($(document).width() - $("#title").width()) / 2);
+    });
+    $("#title").html(app_name + " - loading...");
+    $(this).blur();
+  });
+  var model_name = getParameterByName("name");
+  if (model_name) {
+    $('.model-selector option[value="' + model_name + '"]').attr("selected", "selected").change();
+  } else {
+    // // load the first model
+    $('#model-selector-net option:first-child').attr("selected", "selected").change();
+  }
+});
+
+$("#input-thickness").keypress(function(e){
+  if(e.charCode == 13) {
+    var thickness = parseFloat($(this).val());
+    $.each(origamis, function(index, origami) {
+      origami.setThickness(thickness);
+    });
+    $(this).blur();
+  }
+})
+
+// drag and drop
+$("html").on("dragover", function(event) {
+  event.preventDefault();
+  event.stopPropagation();
+});
+
+$("html").on("dragleave", function(event) {
+  event.preventDefault();
+  event.stopPropagation();
+});
+
+$("html").on("drop", function(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  var files = event.originalEvent.dataTransfer.files;
+  if (!files) return;
+  // only read the first file
+  var file = files[0];
+  var loader = null;
+  var is_model_file = false;
+  var is_traj_file = false
+  if (file.name.endsWith('.json')) {
+    loader = new Origami.JSONLoader();
+    is_model_file = true;
+    //TODO check file type...
+  } else if (file.name.endsWith('.ori')) {
+    loader = new Origami.ORILoader();
+    is_model_file = true;
+  } else if (file.name.endsWith('.trj')) {
+    loader = new Origami.TRJLoader();
+    is_traj_file = true;
+  } else {
+    return;
+  }
+  if (is_model_file) {
+    loader.load(file, function(obj) {
+      removeModel();
+      var origami = new Origami.Model();
+      origami.build(obj);
+      origami.loaded = true;
+      origami.foldTo(origami.goal_cfg);
+      // put in the array
+      origamis.push(origami);
+
+      addModel(origami);
+      console.log(origami.name + ' loaded!');
+      // reset scene, rescale
+      resetScene();
+      $("#title").html(app_name + " - " + file.name)
+        .css("left", ($(document).width() - $("#title").width()) / 2);
+    });
+  }
+  if (is_traj_file) {
+    loader.load(file, function(obj) {
+      // set path ...
+      origami.setFoldingPath(obj.trajs);
+    });
+  }
+
+});
