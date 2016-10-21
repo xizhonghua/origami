@@ -110,6 +110,21 @@
       "traj_url": "models/star-024_18811_1428281430.trj.json"
     }]
   }, {
+    "name": "grid-4-4-2-2",
+    "components": [{
+      "model_url": "models/grid_4_4_2x2.ori.json"
+    }]
+  }, {
+    "name": "grid-4-4-1-2",
+    "components": [{
+      "model_url": "models/grid_4_4_1x2.ori.json"
+    }]
+  }, {
+    "name": "mountain-compact",
+    "components": [{
+      "model_url": "models/mountain_compact.ori.json"
+    }]
+  }, {
     "name": "Snail",
     "components": [{
       "model_url": "models/snail/0.ori",

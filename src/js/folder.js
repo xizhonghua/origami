@@ -123,8 +123,14 @@ function resetScene() {
   if (!rendered) render();
 }
 
+function getThickness() {
+  return parseFloat($("#input-thickness").val()) || 0.0
+}
+
 function loadModel(model_url, traj_url, callback) {
   var origami = new Origami.Model();
+
+  origami.setThickness(getThickness());
 
   // put in the array
   origamis.push(origami);
@@ -334,6 +340,10 @@ $('div[source]').each(function(index) {
 // by default use github as CDN
 var use_cdn = (getParameterByName("cdn") == "0") ? false : true;
 var cdn_prefix = 'https://cdn.rawgit.com/xizhonghua/origami/master/src/';
+var init_thickness = parseFloat(getParameterByName("thickness")) || 0.0;
+
+$("#input-thickness").val(init_thickness);
+
 $.getJSON("models/model-list.json", function(data, textStatus) {
 
   for (var i = 0; i < data.models.length; ++i) {

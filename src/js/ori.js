@@ -450,7 +450,7 @@ Origami.Model.prototype.buildThreeGeometry = function() {
     this.geometry.faces.push(new THREE.Face3(o1+1, o2+2, o1+2));
 
     this.geometry.faces.push(new THREE.Face3(o1+2, o2+2, o2));
-    this.geometry.faces.push(new THREE.Face3(o1+1, o2, o1));
+    this.geometry.faces.push(new THREE.Face3(o1+2, o2, o1));
   }  
 
 
@@ -499,7 +499,6 @@ Origami.Model.prototype.setFoldingPath = function(path) {
 // set thickness
 Origami.Model.prototype.setThickness = function(thickness) {
   this.thickness = thickness;
-  //TODO(zxi)
 }
 
 // fold the origami to certen percentage
@@ -562,42 +561,39 @@ Origami.Model.prototype.foldTo = function(cfg) {
   for (var i = 0; i < this.ordered_face_ids.length; ++i) {
     var fid = this.ordered_face_ids[i];
 
-    // do not fold base face
-    if (fid == this.base_face_id) continue;
     var face = this.faces[fid];
+
     var pid = face.pid;
-    var parent_face = this.faces[pid];
 
-    var crease = this.creases[face.cid];
-    var folding_angle = cfg[face.cid];
+    if(fid != this.base_face_id) {
+      var parent_face = this.faces[pid];
 
-    // i_vertices
-    var p1 = parent_face.getVertex(crease.vid1).clone();
-    var p2 = parent_face.getVertex(crease.vid2).clone();
-    
-    // support thickness by using axis shift
+      var crease = this.creases[face.cid];
+      var folding_angle = cfg[face.cid];
 
-    
+      // i_vertices
+      var p1 = parent_face.getVertex(crease.vid1).clone();
+      var p2 = parent_face.getVertex(crease.vid2).clone();
+      
+      // support thickness by using axis shift
 
-    if(folding_angle < 0 && this.thickness > 0) {
-      var offset = parent_face.computeNormal().multiplyScalar(this.thickness);
-      p1.add(offset);
-      p2.add(offset);
+      if(folding_angle < 0 && this.thickness > 0) {
+        var offset = parent_face.computeNormal().multiplyScalar(this.thickness);
+        p1.add(offset);
+        p2.add(offset);
+      }
+
+      // computing folding matrix
+      var transform_matrix = new THREE.Matrix4();
+      ms[fid] = transform_matrix.makeTransform(p1, p2, folding_angle).multiply(ms[pid]);
     }
-    
-
-    // console.log('fid = ' + fid + ' pid = ' + pid + ' vid1 = ' + crease.vid1 + ' vid2 = ' + crease.vid2);
-
-    // computing folding matrix
-    var transform_matrix = new THREE.Matrix4();
-    ms[fid] = transform_matrix.makeTransform(p1, p2, folding_angle).multiply(ms[pid]);
 
     // Compute the folded position for front face.
     for (var j = 0; j < 3; j++) {
       var vid = face.vids[j];
 
       // compute the coordinates for each vertex on front face
-      this.i_vertices[fid*3 + j].copy(this.flat_vertices[vid]).applyMatrix4(ms[fid]);      
+      this.i_vertices[fid*3 + j].copy(this.flat_vertices[vid]).applyMatrix4(ms[fid]);
     }
 
     // Compute the folded position for bottom face.
