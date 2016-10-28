@@ -296,6 +296,33 @@ $(document).keypress(function(event) {
           m.color.setHex(0x996633);
       });
       break;
+    case 67: // color for the path, red to blue
+      console.log('CCC');
+
+      $.each(origamis, function(index, origami) {
+        var m = origami.mesh.material;
+        m.color.setHex(0xffffff);
+        m.vertexColors = THREE.FaceColors;
+        m.needsUpdate = true;
+        var geo = origami.mesh.geometry;
+        var faces = geo.faces;
+        var l = origami.ordered_face_ids.length;
+        for(var i = 0; i<l; ++i) {
+          var fid = origami.ordered_face_ids[i];
+          var c = _interpolateColor([255, 0, 0], [0,0,255], i*1.0 / l);
+          console.log(c);
+          var r = c[0] / 255.0;
+          var g = c[1] / 255.0;
+          var b = c[2] / 255.0;
+          faces[fid].color.setRGB(r,g,b); // front face
+          faces[fid+l].color.setRGB(r,g,b); // back face
+          for(var j=0;j<6;++j)
+            faces[fid*6+2*l+j].color.setRGB(r,g,b); // side faces
+        }
+        geo.colorsNeedUpdate = true;
+        console.log(geo);
+      });
+      break;
       // 'e'
     case 101:
       $.each(origamis, function(index, origami) {

@@ -436,7 +436,7 @@ Origami.Model.prototype.buildThreeGeometry = function() {
     this.geometry.faces.push(new THREE.Face3(index_offset+2, index_offset+1, index_offset));
   }
 
-  // 4 side faces  
+  // 6 side faces  
   for (var i = 0; i < this.faces.length; ++i) {
     // top face index
     var o1 = i*3; 
