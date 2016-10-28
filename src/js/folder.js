@@ -428,6 +428,7 @@ $("html").on("drop", function(event) {
     loader.load(file, function(obj) {
       removeModel();
       var origami = new Origami.Model();
+      origami.setThickness(getThickness());
       origami.build(obj);
       origami.loaded = true;
       origami.foldTo(origami.goal_cfg);
