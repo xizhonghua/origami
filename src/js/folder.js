@@ -290,6 +290,8 @@ $(document).keypress(function(event) {
     case 99:
       $.each(origamis, function(index, origami) {
         var m = origami.mesh.material;
+        m.vertexColors = THREE.NoColors;
+        m.needsUpdate = true;
         if (m.color.getHex() == 0x996633)
           m.color.setRGB(Math.random(), Math.random(), Math.random());
         else
