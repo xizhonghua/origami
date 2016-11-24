@@ -430,7 +430,6 @@ Origami.Model.prototype.buildThreeGeometry = function() {
   }
 
   // back faces
-  
   for (var i = 0; i < this.faces.length; ++i) {
     var index_offset = (this.faces.length + i) * 3;
     this.geometry.faces.push(new THREE.Face3(index_offset+2, index_offset+1, index_offset));
@@ -478,7 +477,7 @@ Origami.Model.prototype.translate = function(v) {
 Origami.Model.prototype.scale = function(scale) {
   for (var i = 0; i < this.vertices.length; ++i) {
     this.vertices[i].multiplyScalar(scale);
-    this.flat_vertices[i].multiplyScalar(scale);    
+    this.flat_vertices[i].multiplyScalar(scale);
   }
 
   for(var i=0;i<this.i_vertices.length; ++i) {
@@ -577,8 +576,8 @@ Origami.Model.prototype.foldTo = function(cfg) {
       
       // support thickness by using axis shift
 
-      if(folding_angle < 0 && this.thickness > 0) {
-        var offset = parent_face.computeNormal().multiplyScalar(this.thickness);
+      if(folding_angle > 0 && this.thickness > 0) {
+        var offset = parent_face.computeNormal().multiplyScalar(-this.thickness);
         p1.add(offset);
         p2.add(offset);
       }
@@ -602,8 +601,8 @@ Origami.Model.prototype.foldTo = function(cfg) {
 
     for (var j = 0; j < 3; j++) {
       var vid = face.vids[j];
-      // compute the coordinates for each vertex on front face
-      this.i_vertices[fid*3 + this.faces.length*3 + j].copy(this.i_vertices[fid*3+j]).add(offset);
+      // compute the coordinates for each vertex on bottom face
+      this.i_vertices[fid*3 + this.faces.length*3 + j].copy(this.i_vertices[fid*3+j]).sub(offset);
     }
 
 

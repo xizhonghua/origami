@@ -21,7 +21,7 @@ function init() {
   document.body.appendChild(renderer.domElement);
 
 
-  var ambientLight = new THREE.AmbientLight(0xcccccc);
+  var ambientLight = new THREE.AmbientLight(0xeeeeee);
   scene.add(ambientLight);
 
   var lights = [];
@@ -29,9 +29,9 @@ function init() {
   lights[1] = new THREE.PointLight(0xffffff, 0.5, 0);
   lights[2] = new THREE.PointLight(0xffffff, 0.5, 0);
 
-  lights[0].position.set(0, 200, 100);
-  lights[1].position.set(100, 100, 100);
-  lights[2].position.set(-100, -100, -100);
+  lights[0].position.set(100, 100, 100);
+  lights[1].position.set(-100, 100, 100);
+  lights[2].position.set(0, 100, -100);
 
   scene.add(lights[0]);
   scene.add(lights[1]);
@@ -55,7 +55,7 @@ function addModel(origami) {
       color: 0x996633,
       specular: 0x050505,
       shininess: 10,
-      emssion: 0x333333,
+      emssion: 0x666666,
       // map: texture,
       side: THREE.DoubleSide
     }),
