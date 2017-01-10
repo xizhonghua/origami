@@ -6,6 +6,9 @@ var origamis = [];
 var max_p = 400;
 var delay_p = 0.1 * max_p;
 
+// radius of bounding sphere
+var radius = 1.0;
+
 // init scene, camera, controls, lights, etc
 function init() {
   scene = new THREE.Scene();
@@ -112,9 +115,11 @@ function resetScene() {
 
   console.log(bounding_sphere);
 
+  radius = bounding_sphere.radius;
+
   // scale the model to have R = 1.0
   $.each(origamis, function(index, origami) {
-    origami.scale(1.0 / bounding_sphere.radius);
+    origami.scale(1.0 / radius);
   });
 
   resetCamera();
@@ -124,7 +129,7 @@ function resetScene() {
 }
 
 function getThickness() {
-  return parseFloat($("#input-thickness").val()) || 0.0
+  return parseFloat($("#input-thickness").val()) / radius || 0.0
 }
 
 function loadModel(model_url, traj_url, callback) {
@@ -311,7 +316,7 @@ $(document).keypress(function(event) {
         var l = origami.ordered_face_ids.length;
         for(var i = 0; i<l; ++i) {
           var fid = origami.ordered_face_ids[i];
-          var c = _interpolateColor([255, 0, 0], [0,0,255], i*1.0 / l);
+          var c = _interpolateColor(i*1.0 / l);
           console.log(c);
           var r = c[0] / 255.0;
           var g = c[1] / 255.0;
@@ -411,9 +416,8 @@ $.getJSON("models/model-list.json", function(data, textStatus) {
 
 $("#input-thickness").keypress(function(e){
   if(e.charCode == 13) {
-    var thickness = parseFloat($(this).val());
     $.each(origamis, function(index, origami) {
-      origami.setThickness(thickness);
+      origami.setThickness(getThickness());
     });
     $(this).blur();
   }
