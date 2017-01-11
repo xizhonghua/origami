@@ -247,7 +247,7 @@ var r2h = function(rgb) {
 
 
 var _interpolateColor = function(factor) {
-  var index = Math.round(COLOR.viridis.length * factor);
+  var index = Math.round((COLOR.viridis.length-1) * factor);
   var result = COLOR.viridis[index].slice();
   for(var i=0;i<3;++i)
     result[i] *= 255;

@@ -317,7 +317,6 @@ $(document).keypress(function(event) {
         for(var i = 0; i<l; ++i) {
           var fid = origami.ordered_face_ids[i];
           var c = _interpolateColor(i*1.0 / l);
-          console.log(c);
           var r = c[0] / 255.0;
           var g = c[1] / 255.0;
           var b = c[2] / 255.0;
