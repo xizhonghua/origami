@@ -29,6 +29,48 @@ Origami.Crease = function(model, cid, vid1, vid2, folding_angle, fid, pid) {
 
   // parent face id
   this.pid = pid;
+
+  // PI - init dihergal angle
+  this.init_angle = 0;
+}
+
+// Compute the folding angle
+Origami.Crease.prototype.computeFoldingAngle = function() {
+  var v1 = this.model.i_vertices[this.vid1];
+  var v2 = this.model.i_vertices[this.vid2];
+
+  var f1 = this.model.faces[this.pid];
+  var f2 = this.model.faces[this.fid];
+
+  var n1 = f1.computeNormal();
+  var n2 = f2.computeNormal();
+
+  var dot = n1.dot(n2);
+  dot = Math.max(-1, Math.min(1, dot));
+  var alpha = Math.acos(dot);
+
+  var c1 = f1.computeCOM();
+  var c2 = f2.computeCOM();
+  var w = c1.clone().sub(c2);
+
+  var dot2 = w.dot(n2);
+
+  var SMALL_NUMBER = 0.01;
+
+  if (Math.abs(alpha) < SMALL_NUMBER) {
+    alpha = 0.0;
+  } else if (dot2 > 0) {
+    alpha = -alpha;
+  }
+
+  // we can tell it's mountain or valley when rotated 180 around a crease
+  if (Math.abs(Math.abs(alpha) - Math.PI) < SMALL_NUMBER) {
+    alpha = Math.PI;
+    if (dot2 > 0)
+      alpha = -Math.PI;
+  }
+
+  return alpha;
 }
 
 // face class
@@ -55,6 +97,7 @@ Origami.Face.prototype.getVertexByIndex = function(index) {
   return this.model.i_vertices[this.fid*3 + index];
 }
 
+// i_vertices
 Origami.Face.prototype.getVertex = function(vid) {
   for(var i=0;i<3;++i)
     if(vid === this.vids[i]) return this.getVertexByIndex(i);
@@ -64,9 +107,19 @@ Origami.Face.prototype.getVertex = function(vid) {
 // Compute the normal using i_vertices
 Origami.Face.prototype.computeNormal = function() {
   var e1 = this.getVertexByIndex(1).clone().sub(this.getVertexByIndex(0));
-  var e2 = this.getVertexByIndex(2).clone().sub(this.getVertexByIndex(1));
+  var e2 = this.getVertexByIndex(2).clone().sub(this.getVertexByIndex(0));
   var n = e1.clone().cross(e2).normalize();
   return n;
+}
+
+// Get center of the face, return THREE.vector3
+Origami.Face.prototype.computeCOM = function() {
+  var v0 = this.getVertexByIndex(0);
+  var v1 = this.getVertexByIndex(1);
+  var v2 = this.getVertexByIndex(2);
+
+  var c = v0.clone().add(v1).add(v2);
+  return c.divideScalar(3);
 }
 
 // model class
@@ -406,8 +459,17 @@ Origami.Model.prototype.build = function(model) {
 
   this.buildThreeGeometry();
 
-
   console.log('built!');
+
+  this.foldToPercentage(0);
+
+  console.log('fold to start');
+
+  for(var i=0;i<this.creases.length;++i) {
+    var c = this.creases[i];
+    c.init_angle = c.computeFoldingAngle();
+    console.log("init folding angle c" + i + " " + c.init_angle)
+  }
 };
 
 Origami.Model.prototype.buildThreeGeometry = function() {
@@ -564,23 +626,22 @@ Origami.Model.prototype.foldTo = function(cfg) {
 
     var pid = face.pid;
 
+    var crease = null;
+
+    var folding_angle = 0;
+
     if(fid != this.base_face_id) {
       var parent_face = this.faces[pid];
 
-      var crease = this.creases[face.cid];
-      var folding_angle = cfg[face.cid];
+      crease = this.creases[face.cid];
+      folding_angle = cfg[face.cid];
+
+      var offset = parent_face.computeNormal().multiplyScalar(this.thickness/2);
 
       // i_vertices
-      var p1 = parent_face.getVertex(crease.vid1).clone();
-      var p2 = parent_face.getVertex(crease.vid2).clone();
-      
-      // support thickness by using axis shift
-
-      if(folding_angle > 0 && this.thickness > 0) {
-        var offset = parent_face.computeNormal().multiplyScalar(-this.thickness);
-        p1.add(offset);
-        p2.add(offset);
-      }
+      // center of the penel
+      var p1 = parent_face.getVertex(crease.vid1).clone().sub(offset); 
+      var p2 = parent_face.getVertex(crease.vid2).clone().sub(offset);
 
       // computing folding matrix
       var transform_matrix = new THREE.Matrix4();
@@ -589,23 +650,47 @@ Origami.Model.prototype.foldTo = function(cfg) {
 
     // Compute the folded position for front face.
     for (var j = 0; j < 3; j++) {
-      var vid = face.vids[j];
-
       // compute the coordinates for each vertex on front face
+      var vid = face.vids[j];
       this.i_vertices[fid*3 + j].copy(this.flat_vertices[vid]).applyMatrix4(ms[fid]);
+    }
+    
+    var shift = new THREE.Vector3(0,0,0);
+    var cur_angle = 0;
+
+    if(crease) {
+      cur_angle = folding_angle + crease.init_angle;
+      if (Math.abs(cur_angle) > 1.1 * Math.PI / 2) {
+
+        // need shift
+        shift = face.computeNormal().multiplyScalar(this.thickness * Math.abs(cur_angle) / Math.PI);
+
+        if(cur_angle < 0) {
+          shift.negate();
+        }
+
+        // Update matrix
+        var e = ms[fid].elements;
+
+        e[12] += shift.x;
+        e[13] += shift.y;
+        e[14] += shift.z;
+      }
+    }
+
+    var offset = face.computeNormal().multiplyScalar(this.thickness/2.0);
+
+    // Update the front face
+    for (var j = 0; j < 3; j++) {
+      // compute the coordinates for each vertex on front face
+      this.i_vertices[fid*3 + j].add(shift).add(offset);
     }
 
     // Compute the folded position for bottom face.
-
-    var offset = face.computeNormal().multiplyScalar(this.thickness);
-
     for (var j = 0; j < 3; j++) {
-      var vid = face.vids[j];
       // compute the coordinates for each vertex on bottom face
-      this.i_vertices[fid*3 + this.faces.length*3 + j].copy(this.i_vertices[fid*3+j]).sub(offset);
+      this.i_vertices[fid*3 + this.faces.length*3 + j].copy(this.i_vertices[fid*3+j]).sub(offset).sub(offset);
     }
-
-
 
   }
 
