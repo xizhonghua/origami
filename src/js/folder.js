@@ -1,5 +1,10 @@
 var scene, camera, renderer, mesh, controls, percentage, animation_step, dir, animation, rendered;
+var rotation_angles = new THREE.Vector3(0,0,0);
 
+
+var origami_group;
+
+// Array of Origami
 var origamis = [];
 
 // for animation
@@ -12,7 +17,7 @@ var radius = 1.0;
 // init scene, camera, controls, lights, etc
 function init() {
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.001, 1e6);
+  camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.001, 1e6);
 
   renderer = new THREE.WebGLRenderer({
     antialias: true
@@ -63,9 +68,9 @@ function addModel(origami) {
       side: THREE.DoubleSide
     }),
     new THREE.MeshBasicMaterial({
-      color: 0x000000,
+      color: 0x333333,
       wireframe: true,
-      wireframeLinewidth: 0.4
+      wireframeLinewidth: 0.1
     })
   ];
 
@@ -77,19 +82,15 @@ function addModel(origami) {
   // model view matrix
   var mvm = new THREE.Matrix4();
 
-  //mvm.setPosition(origami.translation);
   mvm.makeRotationAxis(origami.rotation_axis, origami.rotation_angle);
-  //mvm.setPosition(origami.translation);
 
   origami.mesh.matrix = mvm.clone();
   origami.edges.matrix = mvm.clone();
   origami.mesh.matrixAutoUpdate = false;
   origami.edges.matrixAutoUpdate = false;
-  // origami.mesh.position = origami.translation.clone();
-  // origami.edges.position = origami.translation.clone();
 
-  scene.add(origami.mesh);
-  scene.add(origami.edges);
+  origami_group.add(origami.mesh);
+  origami_group.add(origami.edges);
 }
 
 function resetAnimation() {
@@ -205,17 +206,13 @@ function resetCamera() {
 }
 
 function removeModel() {
-  // remove each origami model from scene
+  scene.remove(origami_group);
+
   $.each(origamis, function(index, ori) {
-    var mesh = scene.getObjectByName(ori.name + '_mesh');
-    var edges = scene.getObjectByName(ori.name + '_edges');
 
     // prevent memory leak
-    if (mesh) mesh.geometry.dispose();
-    if (edges) edges.geometry.dispose();
-
-    scene.remove(mesh);
-    scene.remove(edges);
+    if (ori.mesh) ori.mesh.geometry.dispose();
+    if (ori.edges) ori.edges.geometry.dispose();
 
     ori.mesh = null;
     ori.edges = null;
@@ -223,6 +220,9 @@ function removeModel() {
 
   // clear the array
   origamis = [];
+
+  origami_group = new THREE.Group();
+  scene.add(origami_group);
 }
 
 function animate() {
@@ -261,10 +261,7 @@ $(window).resize(function() {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-$(document).keypress(function(event) {
-
-  console.log(event.charCode);
-
+function onKey(event){
   switch (event.charCode) {
 
     //space
@@ -344,22 +341,34 @@ $(document).keypress(function(event) {
       })
 
       break;
-      // 'x'
+      // 'X' or 'x'
+    case 88:
     case 120:
-      camera.rotation.x += 0.05;
+      rotateModels(new THREE.Vector3(1,0,0), event.charCode==88?0.05:-0.05);
       break;
       // 'y'
+    case 89:
     case 121:
-      camera.rotation.y += 0.05;
+      rotateModels(new THREE.Vector3(0,1,0), event.charCode==89?0.05:-0.05);
       break;
       // 'z'
+    case 90:
     case 122:
-      camera.rotation.z += 0.05;
+      rotateModels(new THREE.Vector3(0,0,1), event.charCode==90?0.05:-0.05);
       break;
     default:
       break;
   }
-});
+}
+
+// axis is a unit vector, e.g. [0, 1, 0]
+function rotateModels(axis, rad) {
+  if(!origami_group) return;
+  origami_group.rotateOnAxis(axis, rad).updateMatrix();
+}
+
+
+$(document).keypress(onKey);
 
 init();
 animate();

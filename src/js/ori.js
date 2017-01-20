@@ -613,7 +613,7 @@ Origami.Model.prototype.foldTo = function(cfg) {
   this.cur_cfg = cfg.clone();
 
   // folding matrices
-  ms = new Array(this.ordered_face_ids.length);
+  var ms = new Array(this.ordered_face_ids.length);
 
   // base face's rotation matrix is an identity matrix
   ms[this.base_face_id] = new THREE.Matrix4();
@@ -663,6 +663,7 @@ Origami.Model.prototype.foldTo = function(cfg) {
       if (Math.abs(cur_angle) > 1.1 * Math.PI / 2) {
 
         // need shift
+        // smooth the shift by cur_angle / Math.PI * basic_shift
         shift = face.computeNormal().multiplyScalar(this.thickness * Math.abs(cur_angle) / Math.PI);
 
         if(cur_angle < 0) {
@@ -691,11 +692,55 @@ Origami.Model.prototype.foldTo = function(cfg) {
       // compute the coordinates for each vertex on bottom face
       this.i_vertices[fid*3 + this.faces.length*3 + j].copy(this.i_vertices[fid*3+j]).sub(offset).sub(offset);
     }
-
   }
+
+  // thrink the panels
+  this.shrinkPanels();
 
   this.updateGeometry();
 };
+
+Origami.Model.prototype.shrinkPanels = function() {
+  if(this.thickness <=0) return;
+
+  for (var i = 0; i < this.ordered_face_ids.length; ++i) {
+    var fid = this.ordered_face_ids[i];
+
+    var p0 = this.i_vertices[fid*3 + 0].clone();
+    var p1 = this.i_vertices[fid*3 + 1].clone();
+    var p2 = this.i_vertices[fid*3 + 2].clone();
+
+    var e0 = p1.clone().sub(p0);
+    var e1 = p2.clone().sub(p1);
+    var e2 = p0.clone().sub(p2);
+
+    var l0 = e0.length();
+    var l1 = e1.length();
+    var l2 = e2.length();
+
+    var ps = [p0, p1, p2];
+    var es = [e0, e1, e2];
+
+    // l2 > l1 = l0
+    var index = [0,1,2];
+
+    if(l0 > l1 && l0 > l2) index = [1, 2, 0];
+    if(l1 > l2 && l1 > l0) index = [2, 0, 1];
+
+    // (p0' + p2') / 2
+    var diagnoal_center = ps[index[0]].clone().add(ps[index[2]]).divideScalar(2.0);
+
+    for (var j = 0; j < 3; j++) {
+      var idx = fid*3 + index[j];
+      var movement = this.thickness * Math.sqrt(2);
+
+      var offset = this.i_vertices[idx].clone().sub(diagnoal_center).normalize().multiplyScalar(movement);
+
+      this.i_vertices[idx].sub(offset);
+      this.i_vertices[idx + this.faces.length*3].sub(offset);
+    }
+  }
+}
 
 // update the threejs geometry once folded
 Origami.Model.prototype.updateGeometry = function() {

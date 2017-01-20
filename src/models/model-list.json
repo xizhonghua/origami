@@ -150,6 +150,12 @@
     }]
   },
   {
+    "name": "L-028",
+    "components": [{
+      "model_url": "models/stacking/L-028_0_p_1_stacked.ori"
+    }]
+  },
+  {
     "name": "Miura_8_8",
     "type": "rigid",
     "components": [{
