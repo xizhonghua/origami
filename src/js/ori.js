@@ -92,16 +92,30 @@ Origami.Face = function(model, fid, vid1, vid2, vid3, pid, cid) {
   this.cid = cid;
 }
 
-// index = 0, 1, 2
+// Get shared vids by two faces...
+Origami.Face.prototype.getSharedVids = function(face) {
+  var shared_vids = this.vids.filter(function(vid) {
+    return face.vids.indexOf(vid) != -1;
+  });
+
+  return shared_vids;
+}
+
+// Get i_vertex by index = 0, 1, 2
 Origami.Face.prototype.getVertexByIndex = function(index) {
   return this.model.i_vertices[this.fid*3 + index];
 }
 
-// i_vertices
-Origami.Face.prototype.getVertex = function(vid) {
+// get index by vid
+Origami.Face.prototype.getVertexIndex = function(vid) {
   for(var i=0;i<3;++i)
-    if(vid === this.vids[i]) return this.getVertexByIndex(i);
-  return null;
+    if(vid === this.vids[i]) return i;
+  return -1;
+}
+
+// Get i_vertex by vid
+Origami.Face.prototype.getVertex = function(vid) {
+  return this.getVertexByIndex(this.getVertexIndex(vid));
 }
 
 // Compute the normal using i_vertices
@@ -126,15 +140,19 @@ Origami.Face.prototype.computeCOM = function() {
 Origami.Model = function() {
   this.name = 'Origami_' + (++Origami.Id);
 
-  // flat vertices, array of THREE.vector3
+  // init vertices, array of THREE.vector3
   this.flat_vertices = [];
 
   // folded vertices, array of THREE.vector3
+  // drepcated
   this.vertices = [];
 
-  // folded vertices, array of THREE.vertor3.
+  // folded vertices, array of THREE.Vector3.
   // each face has tree vertices.
   this.i_vertices = [];
+
+  // vertices at center of the panel, no shrink
+  this.z_vertices = [];
 
   // faces, array of Origami.Face
   this.faces = [];
@@ -168,7 +186,9 @@ Origami.Model = function() {
   this.goal_cfg = [];
 
   // three js geometry
-  this.geometry = null;
+  this.geometry = null; // main geometry
+  this.geometry_panels = null; // for panel
+  this.geometry_hinges = null; // for hinges
 
   // whether the model is loaded or not
   this.loaded = false;
@@ -444,6 +464,7 @@ Origami.Model.prototype.build = function(model) {
     var face = this.faces[i];
     for(var j=0;j<3;++j) {
       this.i_vertices.push(this.vertices[face.vids[j]].clone());
+      this.z_vertices.push(this.vertices[face.vids[j]].clone());
     }
   }
 
@@ -459,43 +480,38 @@ Origami.Model.prototype.build = function(model) {
 
   this.buildThreeGeometry();
 
-  console.log('built!');
-
   this.foldToPercentage(0);
-
-  console.log('fold to start');
 
   for(var i=0;i<this.creases.length;++i) {
     var c = this.creases[i];
     c.init_angle = c.computeFoldingAngle();
-    console.log("init folding angle c" + i + " " + c.init_angle)
   }
 };
 
 Origami.Model.prototype.buildThreeGeometry = function() {
 
   // build Threejs geometry object
-
   this.geometry = new THREE.Geometry();
 
-  // same pointer
   this.geometry.vertices = this.i_vertices;
-  // this.vertices;
-  // this.geometry.vertices = this.vertices;
 
   this.geometry.faces = [];
 
-
+  // |F|
   // front faces
   for (var i = 0; i < this.faces.length; ++i) {
     this.geometry.faces.push(new THREE.Face3(i*3, i*3+1, i*3+2));
   }
+
+  // Total faces here: |F|, offset 0
 
   // back faces
   for (var i = 0; i < this.faces.length; ++i) {
     var index_offset = (this.faces.length + i) * 3;
     this.geometry.faces.push(new THREE.Face3(index_offset+2, index_offset+1, index_offset));
   }
+
+  // Total faces here: 2|F|, offset |F|
 
   // 6 side faces  
   for (var i = 0; i < this.faces.length; ++i) {
@@ -512,11 +528,50 @@ Origami.Model.prototype.buildThreeGeometry = function() {
 
     this.geometry.faces.push(new THREE.Face3(o1+2, o2+2, o2));
     this.geometry.faces.push(new THREE.Face3(o1+2, o2, o1));
-  }  
+  }
+
+  // Total faces here: 8|F|, offset 2|F|
+
+  // center faces, less shrink
+
+  this.geometry_panels = new THREE.Geometry();
+
+  this.geometry_panels.vertices = this.z_vertices;
+  this.geometry_panels.faces = [];
+
+  for(var i = 0; i < this.faces.length; ++i) {
+    this.geometry_panels.faces.push(new THREE.Face3(i*3, i*3+1, i*3+2));
+  }
+
+  // Total faces here: 9|F|, offset 8|F|
+
+
+  // build hinge
+  this.geometry_hinges = new THREE.Geometry();
+  this.geometry_hinges.vertices = this.z_vertices; // share connection panel vertices
+  this.geometry_hinges.faces = [];
+
+  // total creases hinges...
+  for(var i = 0; i < this.creases.length; ++i) {
+    var c = this.creases[i];
+
+    var fid1 = c.pid;
+    var fid2 = c.fid;
+    var face1 = this.faces[fid1];
+    var face2 = this.faces[fid2];
 
 
 
-  this.geometry.computeBoundingBox();
+    var shared_vids = face1.getSharedVids(face2);
+
+    var v1 = face1.getVertexIndex(shared_vids[0]);
+    var v2 = face1.getVertexIndex(shared_vids[1]);
+    var v3 = face2.getVertexIndex(shared_vids[0]);
+    var v4 = face2.getVertexIndex(shared_vids[1]);
+
+    this.geometry_hinges.faces.push(new THREE.Face3(fid1*3+v1, fid1*3+v2, fid2*3+v4));
+    this.geometry_hinges.faces.push(new THREE.Face3(fid1*3+v1, fid2*3+v4, fid2*3+v3));
+  }
 
   this.updateGeometry();
 }
@@ -560,6 +615,11 @@ Origami.Model.prototype.setFoldingPath = function(path) {
 // set thickness
 Origami.Model.prototype.setThickness = function(thickness) {
   this.thickness = thickness;
+
+  var flag = thickness > 0 ? true : false;
+
+  if(this.panels) this.panels.visible = flag;
+  if(this.panel_edges) this.panel_edges.visible = flag;
 }
 
 // fold the origami to certen percentage
@@ -653,6 +713,7 @@ Origami.Model.prototype.foldTo = function(cfg) {
       // compute the coordinates for each vertex on front face
       var vid = face.vids[j];
       this.i_vertices[fid*3 + j].copy(this.flat_vertices[vid]).applyMatrix4(ms[fid]);
+      this.z_vertices[fid*3 + j].copy(this.i_vertices[fid*3 + j]);
     }
     
     var shift = new THREE.Vector3(0,0,0);
@@ -685,6 +746,7 @@ Origami.Model.prototype.foldTo = function(cfg) {
     for (var j = 0; j < 3; j++) {
       // compute the coordinates for each vertex on front face
       this.i_vertices[fid*3 + j].add(shift).add(offset);
+      this.z_vertices[fid*3 + j].add(shift); // no offset for center panels
     }
 
     // Compute the folded position for bottom face.
@@ -734,10 +796,13 @@ Origami.Model.prototype.shrinkPanels = function() {
       var idx = fid*3 + index[j];
       var movement = this.thickness * Math.sqrt(2);
 
-      var offset = this.i_vertices[idx].clone().sub(diagnoal_center).normalize().multiplyScalar(movement);
+      var offset1 = this.i_vertices[idx].clone().sub(diagnoal_center).normalize().multiplyScalar(movement);
+      var offset2 = this.i_vertices[idx].clone().sub(diagnoal_center).normalize().multiplyScalar(movement/2.0);
 
-      this.i_vertices[idx].sub(offset);
-      this.i_vertices[idx + this.faces.length*3].sub(offset);
+      this.i_vertices[idx].sub(offset1);
+      this.i_vertices[idx + this.faces.length*3].sub(offset1);
+
+      this.z_vertices[idx].sub(offset2);
     }
   }
 }
@@ -745,16 +810,17 @@ Origami.Model.prototype.shrinkPanels = function() {
 // update the threejs geometry once folded
 Origami.Model.prototype.updateGeometry = function() {
 
-  if (!this.geometry) return;
+  var gs = [this.geometry, this.geometry_panels, this.geometry_hinges];
 
-  this.geometry.computeBoundingSphere();
-
-  this.geometry.computeFaceNormals();
-
-  // this.geometry.computeVertexNormals();
-
-  this.geometry.verticesNeedUpdate = true;
-  this.geometry.normalsNeedUpdate = true;
+  for(var i=0;i<gs.length;++i) {
+    var g = gs[i];
+    if(!g) continue;
+    g.computeBoundingBox();
+    g.computeBoundingSphere();
+    g.computeFaceNormals();
+    g.verticesNeedUpdate = true;
+    g.normalsNeedUpdate = true;
+  }
 }
 
 // draw model on the svg object

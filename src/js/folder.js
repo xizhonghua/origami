@@ -14,6 +14,38 @@ var delay_p = 0.1 * max_p;
 // radius of bounding sphere
 var radius = 1.0;
 
+var materials = [
+  new THREE.MeshPhongMaterial({
+    color: 0xB4C4C9,
+    specular: 0x050505,
+    shininess: 10,
+    emssion: 0x666666,
+    // map: texture,
+    side: THREE.DoubleSide
+  }),
+  new THREE.MeshBasicMaterial({
+    color: 0x333333,
+    wireframe: true,
+    wireframeLinewidth: 0.1
+  }),
+  new THREE.MeshPhongMaterial({
+    color: 0xaa8fad,
+    specular: 0x000000,
+    shininess: 0,
+    emssion: 0x000000,
+    // map: texture,
+    side: THREE.DoubleSide
+  }),
+  new THREE.MeshPhongMaterial({
+    color: 0xe8bc84,
+    specular: 0x000000,
+    shininess: 0,
+    emssion: 0x000000,
+    // map: texture,
+    side: THREE.DoubleSide
+  })
+];
+
 // init scene, camera, controls, lights, etc
 function init() {
   scene = new THREE.Scene();
@@ -33,9 +65,9 @@ function init() {
   scene.add(ambientLight);
 
   var lights = [];
-  lights[0] = new THREE.PointLight(0xffffff, 0.5, 0);
-  lights[1] = new THREE.PointLight(0xffffff, 0.5, 0);
-  lights[2] = new THREE.PointLight(0xffffff, 0.5, 0);
+  lights[0] = new THREE.DirectionalLight( 0xffffff, 0.2 )
+  lights[1] = new THREE.DirectionalLight( 0xffffff, 0.2 )
+  lights[2] = new THREE.DirectionalLight( 0xffffff, 0.1 )
 
   lights[0].position.set(100, 100, 100);
   lights[1].position.set(-100, 100, 100);
@@ -44,10 +76,15 @@ function init() {
   scene.add(lights[0]);
   scene.add(lights[1]);
   scene.add(lights[2]);
+
+  origami_group = new THREE.Group();
+  scene.add(origami_group);
 }
 
 // create 3d obj for the given origami and add it the senece 
 function addModel(origami) {
+
+
 
   //var texture = THREE.ImageUtils.loadTexture('textures/paper.png'); 
 
@@ -58,39 +95,35 @@ function addModel(origami) {
 
   // });  
 
-  var materials = [
-    new THREE.MeshPhongMaterial({
-      color: 0x996633,
-      specular: 0x050505,
-      shininess: 10,
-      emssion: 0x666666,
-      // map: texture,
-      side: THREE.DoubleSide
-    }),
-    new THREE.MeshBasicMaterial({
-      color: 0x333333,
-      wireframe: true,
-      wireframeLinewidth: 0.1
-    })
-  ];
+ 
 
   origami.mesh = new THREE.Mesh(origami.geometry, materials[0]);
   origami.edges = new THREE.Mesh(origami.geometry, materials[1]);
+  origami.panels = new THREE.Mesh(origami.geometry_panels, materials[2]);
+  origami.hinges = new THREE.Mesh(origami.geometry_hinges, materials[3]);
+
   origami.mesh.name = origami.name + '_mesh';
   origami.edges.name = origami.name + '_edges';
+  origami.panels.name = origami.name + '_panels';
+  origami.hinges.name = origami.name + '_hinges';
+
+  var meshes = [origami.mesh, 
+                origami.edges, 
+                origami.panels, 
+                origami.hinges];
 
   // model view matrix
   var mvm = new THREE.Matrix4();
 
   mvm.makeRotationAxis(origami.rotation_axis, origami.rotation_angle);
 
-  origami.mesh.matrix = mvm.clone();
-  origami.edges.matrix = mvm.clone();
-  origami.mesh.matrixAutoUpdate = false;
-  origami.edges.matrixAutoUpdate = false;
+  for(var i=0;i<meshes.length;++i) {
+    var mesh = meshes[i];
+    mesh.matrix = mvm.clone();
+    mesh.matrixAutoUpdate = false;
+    origami_group.add(mesh);
+  }
 
-  origami_group.add(origami.mesh);
-  origami_group.add(origami.edges);
 }
 
 function resetAnimation() {
@@ -136,8 +169,6 @@ function getThickness() {
 function loadModel(model_url, traj_url, callback) {
   var origami = new Origami.Model();
 
-  origami.setThickness(getThickness());
-
   // put in the array
   origamis.push(origami);
 
@@ -147,6 +178,8 @@ function loadModel(model_url, traj_url, callback) {
     origami.foldTo(origami.goal_cfg);
 
     addModel(origami);
+
+    origami.setThickness(getThickness());
 
     console.log(origami.name + ' loaded!');
 
@@ -206,17 +239,13 @@ function resetCamera() {
 }
 
 function removeModel() {
-  scene.remove(origami_group);
+  if(!origami_group) return;
 
-  $.each(origamis, function(index, ori) {
-
-    // prevent memory leak
-    if (ori.mesh) ori.mesh.geometry.dispose();
-    if (ori.edges) ori.edges.geometry.dispose();
-
-    ori.mesh = null;
-    ori.edges = null;
+  origami_group.traverse(function(obj){
+    if(obj.geometry) obj.geometry.dispose();
   });
+
+  scene.remove(origami_group);
 
   // clear the array
   origamis = [];
@@ -294,10 +323,10 @@ function onKey(event){
         var m = origami.mesh.material;
         m.vertexColors = THREE.NoColors;
         m.needsUpdate = true;
-        if (m.color.getHex() == 0x996633)
+        if (m.color.getHex() == 0xB4C4C9)
           m.color.setRGB(Math.random(), Math.random(), Math.random());
         else
-          m.color.setHex(0x996633);
+          m.color.setHex(0xB4C4C9);
       });
       break;
     case 67: // color for the path, red to blue
@@ -368,6 +397,14 @@ function rotateModels(axis, rad) {
 }
 
 
+function toggleHinges() {
+
+}
+
+function togglePanels() {
+  
+}
+
 $(document).keypress(onKey);
 
 init();
@@ -424,8 +461,10 @@ $.getJSON("models/model-list.json", function(data, textStatus) {
 
 $("#input-thickness").keypress(function(e){
   if(e.charCode == 13) {
+    var t = getThickness();
     $.each(origamis, function(index, origami) {
-      origami.setThickness(getThickness());
+      origami.setThickness(t);
+      origami.panels_edges;
     });
     $(this).blur();
   }
