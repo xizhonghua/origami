@@ -449,7 +449,7 @@ $('div[source]').each(function(index) {
 var use_cdn = (getParameterByName("cdn") == "0") ? false : true;
 var cdn_prefix = 'https://cdn.rawgit.com/xizhonghua/origami/master/src/';
 var init_thickness = parseFloat(getParameterByName("thickness")) || 0.0;
-var use_random_color = getParameterByName("rc") != "";
+var use_random_color = getParameterByName("rc") || false;
 
 $("#input-thickness").val(init_thickness);
 
