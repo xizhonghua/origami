@@ -97,10 +97,21 @@ function addModel(origami) {
 
  
 
-  origami.mesh = new THREE.Mesh(origami.geometry, materials[0]);
-  origami.edges = new THREE.Mesh(origami.geometry, materials[1]);
-  origami.panels = new THREE.Mesh(origami.geometry_panels, materials[2]);
-  origami.hinges = new THREE.Mesh(origami.geometry_hinges, materials[3]);
+  origami.mesh = new THREE.Mesh(origami.geometry, materials[0].clone());
+  origami.edges = new THREE.Mesh(origami.geometry, materials[1].clone());
+  // dont' show edges by default
+  origami.edges.visible = false;
+
+  if(use_random_color) {
+    origami.edges.visible = true;
+    var m = origami.mesh.material;
+    m.vertexColors = THREE.NoColors;
+    m.needsUpdate = true;
+    m.color.setRGB(Math.random(), Math.random(), Math.random());
+  }
+
+  origami.panels = new THREE.Mesh(origami.geometry_panels, materials[2].clone());
+  origami.hinges = new THREE.Mesh(origami.geometry_hinges, materials[3].clone());
 
   origami.mesh.name = origami.name + '_mesh';
   origami.edges.name = origami.name + '_edges';
@@ -330,7 +341,6 @@ function onKey(event){
       });
       break;
     case 67: // color for the path, red to blue
-      console.log('CCC');
 
       $.each(origamis, function(index, origami) {
         var m = origami.mesh.material;
@@ -340,35 +350,37 @@ function onKey(event){
         var geo = origami.mesh.geometry;
         var faces = geo.faces;
         var l = origami.ordered_face_ids.length;
-        for(var i = 0; i<l; ++i) {
-          var fid = origami.ordered_face_ids[i];
-          var c = _interpolateColor(i*1.0 / l);
-          var r = c[0] / 255.0;
-          var g = c[1] / 255.0;
-          var b = c[2] / 255.0;
-          faces[fid].color.setRGB(r,g,b); // front face
-          faces[fid+l].color.setRGB(r,g,b); // back face
-          for(var j=0;j<6;++j)
-            faces[fid*6+2*l+j].color.setRGB(r,g,b); // side faces
+        for(var i = 0; i<l; i+=2) {
+          for(var p=0;p<=1;++p) {
+            var fid = origami.ordered_face_ids[i+p];
+            var c = _interpolateColor(i*1.0 / l);
+            var r = c[0] / 255.0;
+            var g = c[1] / 255.0;
+            var b = c[2] / 255.0;
+            faces[fid].color.setRGB(r,g,b); // front face
+            faces[fid+l].color.setRGB(r,g,b); // back face
+            for(var j=0;j<6;++j)
+              faces[fid*6+2*l+j].color.setRGB(r,g,b); // side faces
+          }
         }
         geo.colorsNeedUpdate = true;
         console.log(geo);
       });
       break;
+
+    case 112:
+      togglePanels();
+      break;
+    case 104:
+      toggleHinges();
+      break;
       // 'e'
     case 101:
-      $.each(origamis, function(index, origami) {
-        origami.edges.visible = !origami.edges.visible;
-      });
+      toggleEdges();
       break;
       // 't'
     case 116:
-      $.each(origamis, function(index, origami) {
-        var m = origami.mesh.material;
-        m.opacity = m.opacity == 1.0 ? 0.5 : 1.0;
-        m.transparent = m.opacity == 1.0 ? false : true;
-      })
-
+      toggleTransparency();
       break;
       // 'X' or 'x'
     case 88:
@@ -396,13 +408,30 @@ function rotateModels(axis, rad) {
   origami_group.rotateOnAxis(axis, rad).updateMatrix();
 }
 
-
 function toggleHinges() {
-
+ $.each(origamis, function(index, origami) {
+    origami.hinges.visible = !origami.hinges.visible;
+  });
 }
 
 function togglePanels() {
-  
+  $.each(origamis, function(index, origami) {
+    origami.panels.visible = !origami.panels.visible;
+  });
+}
+
+function toggleEdges() {
+  $.each(origamis, function(index, origami) {
+    origami.edges.visible = !origami.edges.visible;
+  });
+}
+
+function toggleTransparency() {
+   $.each(origamis, function(index, origami) {
+      var m = origami.mesh.material;
+      m.opacity = m.opacity == 1.0 ? 0.5 : 1.0;
+      m.transparent = m.opacity == 1.0 ? false : true;
+    });
 }
 
 $(document).keypress(onKey);
@@ -420,6 +449,7 @@ $('div[source]').each(function(index) {
 var use_cdn = (getParameterByName("cdn") == "0") ? false : true;
 var cdn_prefix = 'https://cdn.rawgit.com/xizhonghua/origami/master/src/';
 var init_thickness = parseFloat(getParameterByName("thickness")) || 0.0;
+var use_random_color = getParameterByName("rc") != "";
 
 $("#input-thickness").val(init_thickness);
 
