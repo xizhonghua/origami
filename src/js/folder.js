@@ -49,7 +49,7 @@ var materials = [
 // init scene, camera, controls, lights, etc
 function init() {
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.001, 1e6);
+  camera = new THREE.PerspectiveCamera(30, window.innerWidth / window.innerHeight, 0.1, 1e4);
 
   renderer = new THREE.WebGLRenderer({
     antialias: true
