@@ -156,6 +156,13 @@
     }]
   },
   {
+    "name": "Mountain",
+    "components": [{
+      "model_url": "models/stacking/ununfoldable-068_0_p_1_stacked.ori",
+      "traj_url": "models/stacking/ununfoldable-068_0_p_1_stacked.trj"
+    }]
+  },
+  {
     "name": "Miura_8_8",
     "type": "rigid",
     "components": [{

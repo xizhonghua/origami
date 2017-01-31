@@ -555,8 +555,9 @@ $("html").on("drop", function(event) {
   }
   if (is_traj_file) {
     loader.load(file, function(obj) {
+      // assuming the first model
       // set path ...
-      origami.setFoldingPath(obj.trajs);
+      origamis[0].setFoldingPath(obj.trajs);
     });
   }
 
