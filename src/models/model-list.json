@@ -152,14 +152,22 @@
   {
     "name": "L-028",
     "components": [{
-      "model_url": "models/stacking/L-028_0_p_1_stacked.ori"
+      "model_url": "models/stacking/L-028_0_p_1_stacked.ori",
+      "traj_url": "models/stacking/L-028_0_p_1_stacked.trj"
     }]
   },
   {
     "name": "Mountain",
     "components": [{
-      "model_url": "models/stacking/ununfoldable-068_0_p_1_stacked.ori",
-      "traj_url": "models/stacking/ununfoldable-068_0_p_1_stacked.trj"
+      "model_url": "models/stacking/ununfoldable-068_1_1.ori",
+      "traj_url": "models/stacking/ununfoldable-068_1_1.trj"
+    }]
+  },
+  {
+    "name": "Mountain_2_2",
+    "components": [{
+      "model_url": "models/stacking/ununfoldable-068_2_2.ori",
+      "traj_url": "models/stacking/ununfoldable-068_2_2.trj"
     }]
   },
   {

@@ -224,9 +224,9 @@ function loadModels(models, callback) {
 }
 
 function resetCamera() {
-  camera.position.z = 3;
-  camera.position.x = 0;
-  camera.position.y = 0;
+  camera.position.z = 5;
+  camera.position.x = 5;
+  camera.position.y = 2;
   camera.rotation.set(0, 0, 0);
 
   if (controls) controls.removeEventListener('change', render);
