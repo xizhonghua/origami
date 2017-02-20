@@ -1,5 +1,18 @@
 {
   "models": [{
+    "name": "Fish",
+    "components": [{
+      "model_url": "models/fish/fish-472-1_0_s0.ori"
+    }, {
+      "model_url": "models/fish/fish-472-2_0_s0.ori"
+    }, {
+      "model_url": "models/fish/fish-472-3_0_s0.ori"
+    }, {
+      "model_url": "models/fish/fish-472-4_0_s0.ori"
+    }, {
+      "model_url": "models/fish/fish-472-5_0_s0.ori"
+    }]
+  }, {
     "name": "Horse",
     "components": [{
       "model_url": "models/horse/horse-312_patch_0.ori",
