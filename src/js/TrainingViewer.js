@@ -469,14 +469,15 @@ $.getJSON("models/model-list.json", function(data, textStatus) {
                 var oris_toload = $(data).find("a:contains(" + fileextension + ")");
                 var count = 0;
                 oris_toload.each(function () {
-                    var filename = this.href.replace(window.location.host, "").replace("http://", "");
-                    var gen = filename.replace(/\/params_(\d+)_i_\d+.ori/,"$1");
+                    var filename = this.href.substring(this.href.lastIndexOf('/')+1);
+                    // this.href.replace(window.location.host, "").replace("http://", "");
+                    var gen = /params_(\d+)_i_\d+.ori/.exec(filename)[1];
                     if(gen !== filename) {
                         if(!oriFiles[gen]) {
                             oriFiles[gen] = [];
                             //console.log("gen = "+gen);
                         }
-                        oriFiles[gen].push(dir+filename);
+                        oriFiles[gen].push(dir+'/'+filename);
                         //console.log(filename);
                     }
 
