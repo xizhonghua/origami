@@ -620,6 +620,7 @@ Origami.Model.prototype.setThickness = function(thickness) {
 
   if(this.panels) this.panels.visible = flag;
   if(this.panel_edges) this.panel_edges.visible = flag;
+  if(this.hinges) this.hinges.visible = flag;
 }
 
 // fold the origami to certen percentage
