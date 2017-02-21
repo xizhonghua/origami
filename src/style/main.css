@@ -61,13 +61,20 @@ table {
     font-size: 14px; 
 }
 
-#help {
-    position: absolute;
-    top:4px;
-    right: 4px;
-    font-size:12px;
-    padding:4px;
-    background-color: rgba(255, 255, 255, 0.4);                
+.selector {
+  margin:4px;
+}
+
+.selector-text {
+  width: 80px;
+  display: inline-block;
+  /*text-align: ;*/
+}
+
+#help-dialog {
+    height: 300px;
+    overflow: scroll;
+    width: 500px;
 }
 
 #copyright {
@@ -77,9 +84,37 @@ table {
     font-size:12px;
 }
 
+#title-div {
+  position: absolute;
+  top:4px;
+  width: 100%;
+  text-align: center;
+  z-index: 1;
+}
+
 #title {
-    position: absolute;
-    top:4px;
-    left:45%;
-    font-weight: bold;                
+  font-weight: bold;
+}
+
+#help-hint {
+  margin-top: 4px;
+  color: #999999;
+  font-size: 12px;
+}
+
+.help-table {
+  border-collapse: collapse;
+  border: 1px solid #ddd;
+  width:16rem;
+}
+
+th, td {
+  border: 1px solid #999;
+  padding: 0.1rem 0.5rem;
+  text-align: left;
+}
+
+tr td:first-child, tr th:first-child {
+  text-align: right;
+  width:5rem;
 }

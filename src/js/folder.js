@@ -46,6 +46,8 @@ var materials = [
   })
 ];
 
+
+
 // init scene, camera, controls, lights, etc
 function init() {
   scene = new THREE.Scene();
@@ -79,6 +81,9 @@ function init() {
 
   origami_group = new THREE.Group();
   scene.add(origami_group);
+
+
+  $( "#help-dialog" ).dialog({ autoOpen: false })
 }
 
 // create 3d obj for the given origami and add it the senece 
@@ -166,6 +171,8 @@ function resetScene() {
   $.each(origamis, function(index, origami) {
     origami.scale(1.0 / radius);
   });
+
+  updateModels();
 
   resetCamera();
   resetAnimation();
@@ -302,6 +309,8 @@ $(window).resize(function() {
 });
 
 function onKey(event){
+  var y = String.fromCharCode(event.charCode);
+
   switch (event.charCode) {
 
     //space
@@ -330,57 +339,33 @@ function onKey(event){
       break;
       // 'c': random colors
     case 99:
-      $.each(origamis, function(index, origami) {
-        var m = origami.mesh.material;
-        m.vertexColors = THREE.NoColors;
-        m.needsUpdate = true;
-        if (m.color.getHex() == 0xB4C4C9)
-          m.color.setRGB(Math.random(), Math.random(), Math.random());
-        else
-          m.color.setHex(0xB4C4C9);
-      });
+      config.randomColor = !config.randomColor;
+      config.pathColor = false;
+      updateColor();
       break;
     case 67: // color for the path, red to blue
-
-      $.each(origamis, function(index, origami) {
-        var m = origami.mesh.material;
-        m.color.setHex(0xffffff);
-        m.vertexColors = THREE.FaceColors;
-        m.needsUpdate = true;
-        var geo = origami.mesh.geometry;
-        var faces = geo.faces;
-        var l = origami.ordered_face_ids.length;
-        for(var i = 0; i<l; i+=2) {
-          for(var p=0;p<=1;++p) {
-            var fid = origami.ordered_face_ids[i+p];
-            var c = _interpolateColor(i*1.0 / l);
-            var r = c[0] / 255.0;
-            var g = c[1] / 255.0;
-            var b = c[2] / 255.0;
-            faces[fid].color.setRGB(r,g,b); // front face
-            faces[fid+l].color.setRGB(r,g,b); // back face
-            for(var j=0;j<6;++j)
-              faces[fid*6+2*l+j].color.setRGB(r,g,b); // side faces
-          }
-        }
-        geo.colorsNeedUpdate = true;
-        console.log(geo);
-      });
+      config.pathColor = true;
+      config.randomColor = false;
+      updateColor();
       break;
 
     case 112:
-      togglePanels();
+      config.showPanel = !config.showPanel;
+      updatePanels();
       break;
     case 104:
-      toggleHinges();
+      config.showHinge = !config.showHinge;
+      updateHinges();
       break;
       // 'e'
     case 101:
-      toggleEdges();
+      config.showEdge = !config.showEdge;
+      updateEdges();
       break;
       // 't'
     case 116:
-      toggleTransparency();
+      config.transparent = !config.transparent;
+      updateTransparency();
       break;
       // 'X' or 'x'
     case 88:
@@ -397,9 +382,93 @@ function onKey(event){
     case 122:
       rotateModels(new THREE.Vector3(0,0,1), event.charCode==90?0.05:-0.05);
       break;
+
+    // ? or /
+    case 63:
+    case 47:
+      showHelp();
+      break;
+
+
     default:
       break;
   }
+}
+
+function showHelp() {
+  $( "#help-dialog" ).dialog( "open" );
+}
+
+function updateColor() {
+  if(config.pathColor) {
+    $.each(origamis, function(index, origami) {
+      var m = origami.mesh.material;
+      m.color.setHex(0xffffff);
+      m.vertexColors = THREE.FaceColors;
+      m.needsUpdate = true;
+      var geo = origami.mesh.geometry;
+      var faces = geo.faces;
+      var l = origami.ordered_face_ids.length;
+      for(var i = 0; i<l; i+=2) {
+        for(var p=0;p<=1;++p) {
+          var fid = origami.ordered_face_ids[i+p];
+          var c = _interpolateColor(i*1.0 / l);
+          var r = c[0] / 255.0;
+          var g = c[1] / 255.0;
+          var b = c[2] / 255.0;
+          faces[fid].color.setRGB(r,g,b); // front face
+          faces[fid+l].color.setRGB(r,g,b); // back face
+          for(var j=0;j<6;++j)
+            faces[fid*6+2*l+j].color.setRGB(r,g,b); // side faces
+        }
+      }
+      geo.colorsNeedUpdate = true;
+      console.log(geo);
+    });
+  } else {
+    $.each(origamis, function(index, origami) {
+        var m = origami.mesh.material;
+        m.vertexColors = THREE.NoColors;
+        m.needsUpdate = true;
+        if (config.randomColor)
+          m.color.setRGB(Math.random(), Math.random(), Math.random());
+        else
+          m.color.setHex(0xB4C4C9);
+    });
+  }
+}
+
+function updateHinges() {
+  $.each(origamis, function(index, origami) {
+    origami.hinges.visible = config.showHinge;
+  });
+}
+
+function updatePanels() {
+  $.each(origamis, function(index, origami) {
+    origami.panels.visible = config.showPanel;
+  });
+}
+
+function updateEdges() {
+  $.each(origamis, function(index, origami) {
+    origami.edges.visible = config.showEdge;
+  });
+}
+
+function updateTransparency() {
+  $.each(origamis, function(index, origami) {
+    var m = origami.mesh.material;
+    m.opacity = config.transparent ? 0.5 : 1.0;
+    m.transparent = config.transparent;
+  });
+}
+
+function updateModels() {
+  updateColor();
+  updateHinges();
+  updateEdges();
+  updateTransparency();  
 }
 
 // axis is a unit vector, e.g. [0, 1, 0]
@@ -408,37 +477,22 @@ function rotateModels(axis, rad) {
   origami_group.rotateOnAxis(axis, rad).updateMatrix();
 }
 
-function toggleHinges() {
- $.each(origamis, function(index, origami) {
-    origami.hinges.visible = !origami.hinges.visible;
-  });
-}
-
-function togglePanels() {
-  $.each(origamis, function(index, origami) {
-    origami.panels.visible = !origami.panels.visible;
-  });
-}
-
-function toggleEdges() {
-  $.each(origamis, function(index, origami) {
-    origami.edges.visible = !origami.edges.visible;
-  });
-}
-
-function toggleTransparency() {
-   $.each(origamis, function(index, origami) {
-      var m = origami.mesh.material;
-      m.opacity = m.opacity == 1.0 ? 0.5 : 1.0;
-      m.transparent = m.opacity == 1.0 ? false : true;
-    });
-}
 
 $(document).keypress(onKey);
 
+
+// States
+var config = {
+  showEdge : true,
+  showHinge : false,
+  showPanel : false,
+  randomColor: true,
+  pathColor: false,
+  transparent: false
+};
+
 init();
 animate();
-
 
 var app_name = 'Origami Folder';
 $('div[source]').each(function(index) {
@@ -450,6 +504,14 @@ var use_cdn = (getParameterByName("cdn") == "0") ? false : true;
 var cdn_prefix = 'https://cdn.rawgit.com/xizhonghua/origami/master/src/';
 var init_thickness = parseFloat(getParameterByName("thickness")) || 0.0;
 var use_random_color = getParameterByName("rc") || false;
+
+// override default settings for thick origamis
+if(init_thickness > 0) {
+  config.randomColor = false;
+  config.showPanel = true;
+  config.showHinge = true;
+  config.showEdge = false;
+}
 
 $("#input-thickness").val(init_thickness);
 
@@ -494,7 +556,6 @@ $("#input-thickness").keypress(function(e){
     var t = getThickness();
     $.each(origamis, function(index, origami) {
       origami.setThickness(t);
-      origami.panels_edges;
     });
     $(this).blur();
   }
