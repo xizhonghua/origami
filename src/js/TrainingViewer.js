@@ -393,7 +393,11 @@ function loadOris(files) {
 
     $.each(files, function(index, file) {
         //console.log(file.prototype.toString);
-        loadOri(file, loaded_handler)
+        if(typeof file == 'string') {
+            loadOriFromUrl(file, loaded_handler);
+        } else {
+            loadOri(file, loaded_handler);
+        }
     });
 }
 
@@ -415,6 +419,21 @@ function loadOri(file, callback) {
     });
 }
 
+function loadOriFromUrl(model_url, callback) {
+    var origami = new Origami.Model();
+
+    origamis.push(origami);
+
+    origami.load(model_url, null, function() {
+
+        origami.loaded = true;
+        origami.foldTo(origami.goal_cfg);
+        console.log(origami.name + ' loaded!');
+
+        if (callback) callback();
+    });
+}
+
 $.getJSON("models/model-list.json", function(data, textStatus) {
 
     for (var i = 0; i < data.models.length; ++i) {
@@ -424,7 +443,9 @@ $.getJSON("models/model-list.json", function(data, textStatus) {
             if (model.traj_url)
                 model.traj_url = cdn_prefix + model.traj_url;
         }
-        var selector_id = model.type == 'rigid' ? '#model-selector-cp' : "#model-selector-net";
+
+        if(model.type != "directory") continue;
+        var selector_id = "#model-selector-net";
         $("<option></option>").attr({
             "components": JSON.stringify(model.components),
             "model-name": model.name,
@@ -434,13 +455,45 @@ $.getJSON("models/model-list.json", function(data, textStatus) {
     $(".model-selector").change(function() {
         var $option = $(this).find("option:selected");
         model_name = $option.attr("model-name");
-        components = JSON.parse($option.attr("components"));
-        loadModels(components, function() {
-            $("#title").html(app_name + " - " + model_name)
-                .css("left", ($(document).width() - $("#title").width()) / 2);
+        var compo = JSON.parse($option.attr("components"));
+        var dir = compo[0].model_url;
+        //console.log(dir);
+        var fileextension = ".ori";
+        $.ajax({
+            //This will retrieve the contents of the folder if the folder is configured as 'browsable'
+            url: dir,
+            success: function (data) {
+                oriFiles = {};
+                valueFiles = {};
+                //List all .png file names in the page
+                var oris_toload = $(data).find("a:contains(" + fileextension + ")");
+                var count = 0;
+                oris_toload.each(function () {
+                    var filename = this.href.replace(window.location.host, "").replace("http://", "");
+                    var gen = filename.replace(/\/params_(\d+)_i_\d+.ori/,"$1");
+                    if(gen !== filename) {
+                        if(!oriFiles[gen]) {
+                            oriFiles[gen] = [];
+                            //console.log("gen = "+gen);
+                        }
+                        oriFiles[gen].push(dir+filename);
+                        //console.log(filename);
+                    }
+
+                    //entries ///= entries.concat(toArray(results));
+                    if(++count == oris_toload.length) {
+                        $("#generation-selector").empty();
+                        var gen_selector = document.getElementById("generation-selector");
+                        for (var key in oriFiles) {
+                            var option = document.createElement("option");
+                            option.text = key;
+                            gen_selector.add(option);
+                        }
+                        $('#generation-selector option:first-child').attr("selected", "selected").change();
+                    }
+                });
+            }
         });
-        $("#title").html(app_name + " - loading...");
-        $(this).blur();
     });
     var model_name = getParameterByName("name");
     if (model_name) {

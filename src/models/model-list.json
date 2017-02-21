@@ -221,6 +221,13 @@
       "model_url": "models/square-twist.ori.json",
       "traj_url": "models/square-twist.trj.json"
     }]
+  },
+  {
+    "name": "L",
+    "type": "directory",
+    "components": [{
+      "model_url": "models/learning/L"
+    }]
   }
   ]
 }
