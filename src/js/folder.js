@@ -577,49 +577,91 @@ $("html").on("drop", function(event) {
   event.stopPropagation();
   var files = event.originalEvent.dataTransfer.files;
   if (!files) return;
-  // only read the first file
-  var file = files[0];
-  var loader = null;
-  var is_model_file = false;
-  var is_traj_file = false
-  if (file.name.endsWith('.json')) {
-    loader = new Origami.JSONLoader();
-    is_model_file = true;
-    //TODO check file type...
-  } else if (file.name.endsWith('.ori')) {
-    loader = new Origami.ORILoader();
-    is_model_file = true;
-  } else if (file.name.endsWith('.trj')) {
-    loader = new Origami.TRJLoader();
-    is_traj_file = true;
-  } else {
-    return;
+
+  removeModel();
+
+  // 2/26/2017 Only support ori files
+  var ori_files = [];
+
+  for(var i=0;i<files.length;++i) {
+    if(files[i].name.endsWith('.ori')) ori_files.push(files[i]);
   }
-  if (is_model_file) {
+
+  console.log(ori_files.length);
+
+  var count = 0;
+
+  for(var i=0;i<ori_files.length;++i) {
+    var file = ori_files[i];
+    var loader = new Origami.ORILoader()
     loader.load(file, function(obj) {
-      removeModel();
+      
       var origami = new Origami.Model();
       origami.setThickness(getThickness());
       origami.build(obj);
       origami.loaded = true;
       origami.foldTo(origami.goal_cfg);
+      
       // put in the array
       origamis.push(origami);
 
       addModel(origami);
       console.log(origami.name + ' loaded!');
-      // reset scene, rescale
-      resetScene();
-      $("#title").html(app_name + " - " + file.name)
-        .css("left", ($(document).width() - $("#title").width()) / 2);
+
+      if(++count == ori_files.length) {
+        // reset scene, rescale
+        resetScene();
+        $("#title").html(app_name + " - " + file.name)
+          .css("left", ($(document).width() - $("#title").width()) / 2);
+      }
     });
   }
-  if (is_traj_file) {
-    loader.load(file, function(obj) {
-      // assuming the first model
-      // set path ...
-      origamis[0].setFoldingPath(obj.trajs);
-    });
-  }
+
+
+
+  // // only read the first file
+  // var file = files[0];
+  // var loader = null;
+  // var is_model_file = false;
+  // var is_traj_file = false
+  // if (file.name.endsWith('.json')) {
+  //   loader = new Origami.JSONLoader();
+  //   is_model_file = true;
+  //   //TODO check file type...
+  // } else if (file.name.endsWith('.ori')) {
+  //   loader = new Origami.ORILoader();
+  //   is_model_file = true;
+  // } else if (file.name.endsWith('.trj')) {
+  //   loader = new Origami.TRJLoader();
+  //   is_traj_file = true;
+  // } else {
+  //   return;
+  // }
+  // if (is_model_file) {
+  //   loader.load(file, function(obj) {
+  //     removeModel();
+  //     var origami = new Origami.Model();
+  //     origami.setThickness(getThickness());
+  //     origami.build(obj);
+  //     origami.loaded = true;
+  //     origami.foldTo(origami.goal_cfg);
+  //     // put in the array
+  //     origamis.push(origami);
+
+  //     addModel(origami);
+  //     console.log(origami.name + ' loaded!');
+  //     // reset scene, rescale
+  //     resetScene();
+  //     $("#title").html(app_name + " - " + file.name)
+  //       .css("left", ($(document).width() - $("#title").width()) / 2);
+  //   });
+  // }
+  // if (is_traj_file) {
+  //   loader.load(file, function(obj) {
+  //     // assuming the first model
+  //     // set path ...
+  //     origamis[0].setFoldingPath(obj.trajs);
+  //   });
+  // }
 
 });

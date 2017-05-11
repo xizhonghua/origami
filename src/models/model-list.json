@@ -170,6 +170,13 @@
     }]
   },
   {
+    "name": "Rect-028",
+    "components": [{
+      "model_url": "models/stacking/rect-028_0_p_1_stacked.ori",
+      "traj_url": "models/stacking/rect-028_0_p_1_stacked.trj"
+    }]
+  },
+  {
     "name": "Mountain",
     "components": [{
       "model_url": "models/stacking/ununfoldable-068_1_1.ori",
