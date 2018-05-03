@@ -23,7 +23,18 @@
       </td>
   </tr>
   <tr>
-    <td>Max Iterations </td>
+    <td>Max Generations (For GA) </td>
+    <td>
+      <select id="max-generations" name="max-generations">
+        <option value="10">10</option>
+        <option value="100" selected>100</option>
+        <option value="1000">1000</option>
+        <option value="10000">10000</option>
+      </select>
+    </td>
+  </tr>
+  <tr>
+    <td>Max Iterations (For Non-GA) </td>
     <td>
       <select id="iterations" name="iterations">
         <option value="10">10</option>
@@ -46,12 +57,15 @@
 <script type="text/javascript">
   $.getJSON("backend/get_list.php", function(models) {
     for (var i = 0; i < models.length; ++i) {
+      var prefix = "uploads/" + models[i].replace(/\..+$/, '');
       var $li = $("<li>").appendTo("#processed-models");
-      $("<a>").attr("href", "folder.html?model_url=uploads/" + models[i])
+      $("<a>").attr("href", "folder.html?model_url=" + prefix + ".ori")
         .attr("target", "_blank")
         .html(models[i]).appendTo($li);
       $("<span>").html(" ").appendTo($li)
-      $("<a>").attr("href", "uploads/" + models[i]).html("Download (ori)").appendTo($li);
+      $("<a>").attr("href", prefix + ".ori").html("Download (ori)").appendTo($li);
+      $("<span>").html(" ").appendTo($li)
+      $("<a>").attr("href", prefix + "_cut.svg").html("Download (svg)").appendTo($li);
     }
   });
 </script>
