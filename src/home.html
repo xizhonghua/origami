@@ -11,6 +11,31 @@
   <input name="model" id="model" type="file" />
 </p>
 <p>
+  <table>
+    <tr>
+      <td>Unfolding Method</td>
+      <td>
+        <select id="method" name="method">
+          <option value="ga">GA</option>
+          <option value="f">Flat Tree</option>
+          <option value="s">Steapest Edge</option>
+        </select>
+      </td>
+  </tr>
+  <tr>
+    <td>Max Iterations </td>
+    <td>
+      <select id="iterations" name="iterations">
+        <option value="10">10</option>
+        <option value="100" selected>100</option>
+        <option value="1000">1000</option>
+        <option value="10000">10000</option>
+      </select>
+    </td>
+  </tr>
+</table>
+</p>
+<p>
   <input type="submit" />
 </p>
 </form>
