@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mesh Unfolder Web Demo</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+<body>
+<h1>Upload the model</h1>
+<form action="backend/upload.php" method="post" enctype="multipart/form-data">
+<p>
+  <input name="model" id="model" type="file" />
+</p>
+<p>
+  <input type="submit" />
+</p>
+</form>
+<h2>Processed Models</h2>
+<div>
+  <ul id="processed-models""></ul>
+</div>
+<script type="text/javascript">
+  $.getJSON("backend/get_list.php", function(models) {
+    for (var i = 0; i < models.length; ++i) {
+      var $li = $("<li>").appendTo("#processed-models");
+      $("<a>").attr("href", "folder.html?model_url=uploads/" + models[i])
+        .attr("target", "_blank")
+        .html(models[i]).appendTo($li);
+      $("<span>").html(" ").appendTo($li)
+      $("<a>").attr("href", "uploads/" + models[i]).html("Download (ori)").appendTo($li);
+    }
+  });
+</script>
+</body>
+</html>
